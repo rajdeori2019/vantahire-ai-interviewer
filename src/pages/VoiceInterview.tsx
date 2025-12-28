@@ -61,6 +61,28 @@ const VoiceInterview = () => {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  const contextSentRef = useRef(false);
+
+  // Build context string from interview data and candidate notes
+  const buildInterviewContext = useCallback(() => {
+    if (!interview) return null;
+    
+    let context = `INTERVIEW CONTEXT:\n`;
+    context += `- Job Role: ${interview.job_role}\n`;
+    context += `- Candidate Name: ${interview.candidate_name || 'Not provided'}\n`;
+    
+    if (candidateNotes.trim()) {
+      context += `\nCANDIDATE PROVIDED INFORMATION:\n${candidateNotes}\n`;
+    }
+    
+    if (interview.candidate_notes && interview.candidate_notes !== candidateNotes) {
+      context += `\nADDITIONAL NOTES:\n${interview.candidate_notes}\n`;
+    }
+    
+    context += `\nIMPORTANT: The candidate has already shared this information. Use it to tailor your interview questions. Do NOT ask them to share their resume or job description again - you already have this context.`;
+    
+    return context;
+  }, [interview, candidateNotes]);
 
   const conversation = useConversation({
     onConnect: () => {
@@ -335,6 +357,21 @@ const VoiceInterview = () => {
         agentId: ELEVENLABS_AGENT_ID,
         connectionType: "webrtc",
       });
+
+      // Send context to the agent after session starts
+      const context = buildInterviewContext();
+      if (context) {
+        console.log("Sending interview context to agent:", context);
+        // Small delay to ensure connection is stable
+        setTimeout(() => {
+          try {
+            conversation.sendContextualUpdate(context);
+            console.log("Context sent successfully");
+          } catch (e) {
+            console.log("Could not send contextual update:", e);
+          }
+        }, 1000);
+      }
     } catch (error: any) {
       console.error("Failed to start interview:", error);
       toast({
@@ -346,7 +383,7 @@ const VoiceInterview = () => {
     } finally {
       setIsConnecting(false);
     }
-  }, [conversation, id, toast, candidateNotes]);
+  }, [conversation, id, toast, candidateNotes, buildInterviewContext]);
 
   const endInterview = useCallback(async () => {
     await conversation.endSession();
