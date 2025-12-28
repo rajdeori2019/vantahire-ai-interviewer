@@ -362,8 +362,8 @@ const Dashboard = () => {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => window.open(`/interview/${interview.id}`, "_blank")}
-                        title="Open interview"
+                        onClick={() => window.open(`/voice-interview/${interview.id}`, "_blank")}
+                        title="Open voice interview"
                       >
                         <ExternalLink className="w-4 h-4" />
                       </Button>
