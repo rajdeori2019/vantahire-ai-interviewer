@@ -86,6 +86,7 @@ export type Database = {
           expires_at: string | null
           id: string
           interview_url: string | null
+          job_id: string | null
           job_role: string
           recording_url: string | null
           recruiter_id: string
@@ -105,6 +106,7 @@ export type Database = {
           expires_at?: string | null
           id?: string
           interview_url?: string | null
+          job_id?: string | null
           job_role: string
           recording_url?: string | null
           recruiter_id: string
@@ -124,6 +126,7 @@ export type Database = {
           expires_at?: string | null
           id?: string
           interview_url?: string | null
+          job_id?: string | null
           job_role?: string
           recording_url?: string | null
           recruiter_id?: string
@@ -132,6 +135,56 @@ export type Database = {
           status?: string
           time_limit_minutes?: number | null
           transcript_summary?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "interviews_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      jobs: {
+        Row: {
+          created_at: string
+          department: string | null
+          description: string | null
+          id: string
+          job_type: string | null
+          location: string | null
+          recruiter_id: string
+          salary_range: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          department?: string | null
+          description?: string | null
+          id?: string
+          job_type?: string | null
+          location?: string | null
+          recruiter_id: string
+          salary_range?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          department?: string | null
+          description?: string | null
+          id?: string
+          job_type?: string | null
+          location?: string | null
+          recruiter_id?: string
+          salary_range?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
         }
         Relationships: []
       }
