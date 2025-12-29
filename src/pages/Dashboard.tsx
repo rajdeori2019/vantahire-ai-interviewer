@@ -144,6 +144,30 @@ const Dashboard = () => {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
+  // Helper to refresh session before edge function calls
+  const refreshSessionIfNeeded = async (): Promise<boolean> => {
+    try {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error || !session) {
+        // Session expired, try to refresh
+        const { error: refreshError } = await supabase.auth.refreshSession();
+        if (refreshError) {
+          toast({
+            variant: "destructive",
+            title: "Session Expired",
+            description: "Please log in again to continue."
+          });
+          navigate("/auth");
+          return false;
+        }
+      }
+      return true;
+    } catch (e) {
+      console.error("Session refresh error:", e);
+      return false;
+    }
+  };
+
   const fetchInterviews = async () => {
     try {
       const { data, error } = await supabase
@@ -401,11 +425,18 @@ const Dashboard = () => {
 
       if (error) throw error;
 
+      // Refresh session before calling edge function
+      const sessionValid = await refreshSessionIfNeeded();
+      if (!sessionValid) {
+        setCreating(false);
+        return;
+      }
+
       // Send invitation email to candidate
       const interviewUrl = `${window.location.origin}/voice-interview/${data.id}`;
       
       try {
-        const { error: emailError } = await supabase.functions.invoke("send-candidate-invite", {
+        const { data: emailData, error: emailError } = await supabase.functions.invoke("send-candidate-invite", {
           body: {
             candidateEmail: newInterview.candidateEmail,
             candidateName: newInterview.candidateName || null,
@@ -418,22 +449,39 @@ const Dashboard = () => {
 
         if (emailError) {
           console.error("Failed to send invitation email:", emailError);
-          toast({
-            title: "Interview Created",
-            description: "Interview created but email notification failed. Share the link manually."
-          });
+          // Check for auth errors
+          if (emailError.message?.includes('401') || emailError.message?.includes('JWT')) {
+            toast({
+              variant: "destructive",
+              title: "Session Expired",
+              description: "Please refresh the page and try again."
+            });
+          } else {
+            toast({
+              title: "Interview Created",
+              description: "Interview created but email notification failed. Share the link manually."
+            });
+          }
         } else {
           toast({
             title: "Interview Created & Email Sent",
             description: `Invitation email sent to ${newInterview.candidateEmail}`
           });
         }
-      } catch (emailErr) {
+      } catch (emailErr: any) {
         console.error("Email sending error:", emailErr);
-        toast({
-          title: "Interview Created",
-          description: "Interview created but email notification failed. Share the link manually."
-        });
+        if (emailErr?.message?.includes('401') || emailErr?.message?.includes('JWT')) {
+          toast({
+            variant: "destructive",
+            title: "Session Expired",
+            description: "Please refresh the page and try again."
+          });
+        } else {
+          toast({
+            title: "Interview Created",
+            description: "Interview created but email notification failed. Share the link manually."
+          });
+        }
       }
 
       setInterviews([data as Interview, ...interviews]);
@@ -462,6 +510,14 @@ const Dashboard = () => {
 
   const resendInviteEmail = async (interview: Interview) => {
     setResendingEmail(interview.id);
+    
+    // Refresh session before calling edge function
+    const sessionValid = await refreshSessionIfNeeded();
+    if (!sessionValid) {
+      setResendingEmail(null);
+      return;
+    }
+    
     const interviewUrl = `${window.location.origin}/voice-interview/${interview.id}`;
     
     try {
@@ -476,7 +532,12 @@ const Dashboard = () => {
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        if (error.message?.includes('401') || error.message?.includes('JWT')) {
+          throw new Error("Session expired");
+        }
+        throw error;
+      }
 
       toast({
         title: "Email Sent",
@@ -484,11 +545,19 @@ const Dashboard = () => {
       });
     } catch (error: any) {
       console.error("Failed to resend invite:", error);
-      toast({
-        variant: "destructive",
-        title: "Failed to Send",
-        description: "Could not resend invitation email. Please try again."
-      });
+      if (error?.message?.includes('Session expired') || error?.message?.includes('401')) {
+        toast({
+          variant: "destructive",
+          title: "Session Expired",
+          description: "Please refresh the page and try again."
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Failed to Send",
+          description: "Could not resend invitation email. Please try again."
+        });
+      }
     } finally {
       setResendingEmail(null);
     }
