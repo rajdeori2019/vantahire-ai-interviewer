@@ -4,9 +4,11 @@ import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import EmailPreview from "@/components/EmailPreview";
 import BulkInviteDialog from "@/components/BulkInviteDialog";
+import JobsTab from "@/components/JobsTab";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
@@ -40,7 +42,8 @@ import {
   X,
   Eye,
   Sparkles,
-  Wand2
+  Wand2,
+  Briefcase,
 } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 
@@ -822,13 +825,31 @@ const Dashboard = () => {
           ))}
         </div>
 
-        {/* Interviews List */}
-        <div className="bg-card rounded-2xl border border-border">
-          <div className="p-6 border-b border-border flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-semibold text-foreground">Interviews</h2>
-              <p className="text-sm text-muted-foreground">Manage your candidate interviews</p>
-            </div>
+        {/* Tabs for Jobs and Interviews */}
+        <Tabs defaultValue="jobs" className="space-y-6">
+          <TabsList className="grid w-full max-w-md grid-cols-2">
+            <TabsTrigger value="jobs" className="flex items-center gap-2">
+              <Briefcase className="w-4 h-4" />
+              Jobs
+            </TabsTrigger>
+            <TabsTrigger value="interviews" className="flex items-center gap-2">
+              <Users className="w-4 h-4" />
+              All Interviews
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="jobs">
+            <JobsTab user={user} />
+          </TabsContent>
+
+          <TabsContent value="interviews">
+            {/* Interviews List */}
+            <div className="bg-card rounded-2xl border border-border">
+              <div className="p-6 border-b border-border flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-semibold text-foreground">All Interviews</h2>
+                  <p className="text-sm text-muted-foreground">Manage your candidate interviews</p>
+                </div>
 
             <div className="flex items-center gap-2">
               <Button variant="outline" onClick={() => setBulkInviteOpen(true)}>
@@ -1026,7 +1047,9 @@ const Dashboard = () => {
               ))}
             </div>
           )}
-        </div>
+            </div>
+          </TabsContent>
+        </Tabs>
       </main>
 
       {/* Summary Dialog */}
