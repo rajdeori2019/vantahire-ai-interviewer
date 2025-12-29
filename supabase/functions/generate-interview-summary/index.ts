@@ -26,8 +26,8 @@ async function sendRecruiterNotification(
   // Generate gradient color
   const gradientEnd = adjustColor(brandColor, 30);
   
-  const strengthsList = summary.strengths?.map((s: string) => `<li>${s}</li>`).join('') || '';
-  const improvementsList = summary.areasForImprovement?.map((s: string) => `<li>${s}</li>`).join('') || '';
+  const strengthsList = summary.strengths?.map((s: string) => `<li>${escapeHtml(s)}</li>`).join('') || '';
+  const improvementsList = summary.areasForImprovement?.map((s: string) => `<li>${escapeHtml(s)}</li>`).join('') || '';
   
   const emailHtml = `
     <!DOCTYPE html>
@@ -36,34 +36,34 @@ async function sendRecruiterNotification(
       <style>
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
         .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .header { background: linear-gradient(135deg, ${brandColor}, ${gradientEnd}); color: white; padding: 30px; border-radius: 12px 12px 0 0; text-align: center; }
+        .header { background: linear-gradient(135deg, ${escapeHtml(brandColor)}, ${escapeHtml(gradientEnd)}); color: white; padding: 30px; border-radius: 12px 12px 0 0; text-align: center; }
         .content { background: #f9fafb; padding: 30px; border-radius: 0 0 12px 12px; }
         .score-badge { display: inline-block; background: #10b981; color: white; padding: 8px 16px; border-radius: 20px; font-size: 18px; font-weight: bold; }
         .score-low { background: #ef4444; }
         .score-medium { background: #f59e0b; }
         .section { background: white; padding: 20px; border-radius: 8px; margin: 15px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        .section h3 { margin-top: 0; color: ${brandColor}; }
+        .section h3 { margin-top: 0; color: ${escapeHtml(brandColor)}; }
         .strengths li { color: #10b981; }
         .improvements li { color: #f59e0b; }
-        .recommendation { background: ${brandColor}11; padding: 15px; border-radius: 8px; border-left: 4px solid ${brandColor}; }
+        .recommendation { background: ${escapeHtml(brandColor)}11; padding: 15px; border-radius: 8px; border-left: 4px solid ${escapeHtml(brandColor)}; }
         .scores-grid { display: flex; gap: 10px; flex-wrap: wrap; }
         .score-item { flex: 1; min-width: 80px; text-align: center; padding: 10px; background: #f3f4f6; border-radius: 8px; }
-        .score-item .value { font-size: 24px; font-weight: bold; color: ${brandColor}; }
+        .score-item .value { font-size: 24px; font-weight: bold; color: ${escapeHtml(brandColor)}; }
         .score-item .label { font-size: 12px; color: #6b7280; }
-        .cta-button { display: inline-block; background: ${brandColor}; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; margin-top: 20px; }
+        .cta-button { display: inline-block; background: ${escapeHtml(brandColor)}; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; margin-top: 20px; }
       </style>
     </head>
     <body>
       <div class="container">
         <div class="header">
-          ${branding.logo_url ? `<img src="${branding.logo_url}" alt="${companyName}" style="max-height: 40px; max-width: 150px; margin-bottom: 12px;">` : ''}
+          ${branding.logo_url ? `<img src="${escapeHtml(branding.logo_url)}" alt="${escapeHtml(companyName)}" style="max-height: 40px; max-width: 150px; margin-bottom: 12px;">` : ''}
           <h1>🎯 Interview Completed</h1>
-          <p style="margin: 0; opacity: 0.9;">${companyName} - AI Interview Summary Ready</p>
+          <p style="margin: 0; opacity: 0.9;">${escapeHtml(companyName)} - AI Interview Summary Ready</p>
         </div>
         <div class="content">
           <div style="text-align: center; margin-bottom: 20px;">
-            <h2 style="margin: 0;">${candidateName || 'Candidate'}</h2>
-            <p style="color: #6b7280; margin: 5px 0;">${jobRole}</p>
+            <h2 style="margin: 0;">${escapeHtml(candidateName || 'Candidate')}</h2>
+            <p style="color: #6b7280; margin: 5px 0;">${escapeHtml(jobRole)}</p>
             <span class="score-badge ${score < 5 ? 'score-low' : score < 7 ? 'score-medium' : ''}">${score}/10 Overall Score</span>
           </div>
 
@@ -87,11 +87,11 @@ async function sendRecruiterNotification(
 
           <div class="section">
             <h3>📝 Summary</h3>
-            <p>${summary.summary || 'No summary available.'}</p>
+            <p>${escapeHtml(summary.summary || 'No summary available.')}</p>
           </div>
 
           <div class="recommendation">
-            <strong>💡 Recommendation:</strong> ${summary.recommendation || 'No recommendation available.'}
+            <strong>💡 Recommendation:</strong> ${escapeHtml(summary.recommendation || 'No recommendation available.')}
           </div>
 
           ${strengthsList ? `
@@ -126,16 +126,26 @@ async function sendRecruiterNotification(
     });
 
     if (error) {
-      console.error("Failed to send recruiter notification:", error);
+      console.error("Email send error:", error.message);
       return false;
     }
 
-    console.log("Recruiter notification sent to:", recruiterEmail);
     return true;
-  } catch (error) {
-    console.error("Error sending recruiter notification:", error);
+  } catch (error: any) {
+    console.error("Email error:", error.message);
     return false;
   }
+}
+
+// Helper function to escape HTML to prevent XSS
+function escapeHtml(text: string): string {
+  if (!text) return '';
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 }
 
 // Helper function to adjust color brightness
@@ -157,12 +167,86 @@ serve(async (req) => {
     const { interviewId } = await req.json();
 
     if (!interviewId) {
-      throw new Error('Interview ID is required');
+      return new Response(
+        JSON.stringify({ error: 'Interview ID is required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Validate UUID format to prevent enumeration
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(interviewId)) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid interview ID format' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+
+    // AUTHORIZATION CHECK: Verify the caller has access to this interview
+    const authHeader = req.headers.get('Authorization');
+    
+    if (authHeader) {
+      // Authenticated user - verify they have access
+      const userClient = createClient(supabaseUrl, supabaseAnonKey, {
+        global: { headers: { Authorization: authHeader } }
+      });
+
+      const { data: { user }, error: authError } = await userClient.auth.getUser();
+      
+      if (authError || !user) {
+        return new Response(
+          JSON.stringify({ error: 'Invalid credentials' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Use service role to check relationships
+      const serviceClient = createClient(supabaseUrl, supabaseServiceKey);
+
+      // Check if user is the recruiter
+      const { data: interview } = await serviceClient
+        .from('interviews')
+        .select('recruiter_id')
+        .eq('id', interviewId)
+        .maybeSingle();
+
+      if (!interview) {
+        return new Response(
+          JSON.stringify({ error: 'Interview not found' }),
+          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const isRecruiter = interview.recruiter_id === user.id;
+
+      // Check if user is the candidate
+      const { data: candidateLink } = await serviceClient
+        .from('candidate_interviews')
+        .select('id')
+        .eq('interview_id', interviewId)
+        .eq('anon_user_id', user.id)
+        .maybeSingle();
+
+      if (!isRecruiter && !candidateLink) {
+        return new Response(
+          JSON.stringify({ error: 'Forbidden: Not authorized to access this interview' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    } else {
+      // No auth header - reject the request
+      return new Response(
+        JSON.stringify({ error: 'Authorization required' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Now proceed with service role for privileged operations
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Fetch interview details including recruiter_id
     const { data: interview, error: interviewError } = await supabase
@@ -172,7 +256,10 @@ serve(async (req) => {
       .single();
 
     if (interviewError || !interview) {
-      throw new Error('Interview not found');
+      return new Response(
+        JSON.stringify({ error: 'Interview not found' }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     // Fetch recruiter's email and branding from profiles
@@ -190,16 +277,16 @@ serve(async (req) => {
       .order('created_at', { ascending: true });
 
     if (messagesError) {
-      throw new Error('Failed to fetch messages');
+      return new Response(
+        JSON.stringify({ error: 'Failed to fetch messages' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     // Build transcript text
     const transcript = messages
       .map(m => `${m.role === 'user' ? 'Candidate' : 'Interviewer'}: ${m.content}`)
       .join('\n\n');
-
-    console.log('Generating summary for interview:', interviewId);
-    console.log('Message count:', messages.length);
 
     // Generate AI summary using Lovable AI gateway
     const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
@@ -246,13 +333,14 @@ Respond ONLY with valid JSON, no additional text.`;
     if (!response.ok) {
       const errorText = await response.text();
       console.error('AI Gateway error:', errorText);
-      throw new Error('Failed to generate summary');
+      return new Response(
+        JSON.stringify({ error: 'Failed to generate summary' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     const aiResult = await response.json();
     let summaryText = aiResult.choices[0].message.content;
-    
-    console.log('AI Summary generated:', summaryText);
 
     // Strip markdown code blocks if present
     summaryText = summaryText.trim();
@@ -271,9 +359,11 @@ Respond ONLY with valid JSON, no additional text.`;
     try {
       summary = JSON.parse(summaryText);
     } catch (e) {
-      console.error('Failed to parse AI response:', e);
-      // Return error instead of fake scores
-      throw new Error('Failed to parse AI response - invalid JSON');
+      console.error('Failed to parse AI response');
+      return new Response(
+        JSON.stringify({ error: 'Failed to parse AI response' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     // Update interview with summary
@@ -288,8 +378,11 @@ Respond ONLY with valid JSON, no additional text.`;
       .eq('id', interviewId);
 
     if (updateError) {
-      console.error('Failed to update interview:', updateError);
-      throw new Error('Failed to save summary');
+      console.error('Failed to update interview:', updateError.message);
+      return new Response(
+        JSON.stringify({ error: 'Failed to save summary' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     // Send email notification to recruiter
@@ -309,8 +402,6 @@ Respond ONLY with valid JSON, no additional text.`;
         interviewId,
         branding
       );
-    } else {
-      console.log('No recruiter email found, skipping notification');
     }
 
     return new Response(
@@ -323,9 +414,9 @@ Respond ONLY with valid JSON, no additional text.`;
     );
 
   } catch (error: any) {
-    console.error('Error generating summary:', error);
+    console.error('Error:', error.message);
     return new Response(
-      JSON.stringify({ error: error.message || 'Unknown error' }),
+      JSON.stringify({ error: 'Internal server error' }),
       { 
         status: 500, 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
