@@ -6,98 +6,116 @@
 
 @layer base {
   :root {
-    --background: 210 20% 98%;
-    --foreground: 215 25% 15%;
+    /* VantaHire Brand - Light Theme */
+    --background: 240 20% 98%;
+    --foreground: 240 33% 8%;
 
     --card: 0 0% 100%;
-    --card-foreground: 215 25% 15%;
+    --card-foreground: 240 33% 8%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 215 25% 15%;
+    --popover-foreground: 240 33% 8%;
 
-    --primary: 199 89% 48%;
+    /* Purple Primary: #7B38FB */
+    --primary: 261 96% 60%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 20% 96%;
-    --secondary-foreground: 215 25% 25%;
+    --secondary: 240 20% 96%;
+    --secondary-foreground: 240 33% 15%;
 
-    --muted: 210 15% 93%;
-    --muted-foreground: 215 15% 45%;
+    --muted: 240 15% 93%;
+    --muted-foreground: 240 15% 45%;
 
-    --accent: 172 66% 50%;
-    --accent-foreground: 0 0% 100%;
+    /* Gold/Amber Accent: #F59E0B */
+    --accent: 38 92% 50%;
+    --accent-foreground: 240 33% 8%;
+
+    /* Pink Accent: #FF5BA8 */
+    --pink: 333 100% 68%;
+    --pink-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 210 20% 90%;
-    --input: 210 20% 90%;
-    --ring: 199 89% 48%;
+    --border: 240 20% 90%;
+    --input: 240 20% 90%;
+    --ring: 261 96% 60%;
 
     --radius: 0.75rem;
 
-    /* Custom tokens */
-    --gradient-primary: linear-gradient(135deg, hsl(199 89% 48%), hsl(172 66% 50%));
-    --gradient-hero: linear-gradient(180deg, hsl(210 20% 98%) 0%, hsl(199 30% 95%) 100%);
-    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(210 20% 99%) 100%);
-    --shadow-soft: 0 4px 20px -4px hsl(199 89% 48% / 0.15);
-    --shadow-glow: 0 0 40px hsl(199 89% 48% / 0.2);
-    --shadow-card: 0 4px 24px -8px hsl(215 25% 15% / 0.08);
+    /* VantaHire Custom tokens */
+    --gradient-primary: linear-gradient(135deg, hsl(261 96% 60%), hsl(333 100% 68%));
+    --gradient-accent: linear-gradient(135deg, hsl(261 96% 60%), hsl(38 92% 50%));
+    --gradient-hero: linear-gradient(180deg, hsl(240 20% 98%) 0%, hsl(261 30% 95%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(240 20% 99%) 100%);
+    --shadow-soft: 0 4px 20px -4px hsl(261 96% 60% / 0.15);
+    --shadow-glow: 0 0 40px hsl(261 96% 60% / 0.2);
+    --shadow-card: 0 4px 24px -8px hsl(240 33% 8% / 0.08);
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-primary: 261 96% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 240 4.8% 95.9%;
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-ring: 261 96% 60%;
   }
 
   .dark {
-    --background: 215 25% 8%;
-    --foreground: 210 20% 95%;
+    /* VantaHire Brand - Dark Theme */
+    /* Dark Background: #0D0D1A */
+    --background: 240 33% 8%;
+    /* Secondary BG: #141428 */
+    --foreground: 240 20% 95%;
 
-    --card: 215 25% 11%;
-    --card-foreground: 210 20% 95%;
+    --card: 240 33% 12%;
+    --card-foreground: 240 20% 95%;
 
-    --popover: 215 25% 11%;
-    --popover-foreground: 210 20% 95%;
+    --popover: 240 33% 12%;
+    --popover-foreground: 240 20% 95%;
 
-    --primary: 199 89% 55%;
-    --primary-foreground: 215 25% 8%;
+    /* Purple Primary: #7B38FB */
+    --primary: 261 96% 60%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 215 20% 16%;
-    --secondary-foreground: 210 20% 90%;
+    --secondary: 240 33% 16%;
+    --secondary-foreground: 240 20% 90%;
 
-    --muted: 215 20% 18%;
-    --muted-foreground: 215 15% 55%;
+    --muted: 240 33% 18%;
+    --muted-foreground: 240 15% 55%;
 
-    --accent: 172 66% 45%;
-    --accent-foreground: 0 0% 100%;
+    /* Gold/Amber Accent: #F59E0B */
+    --accent: 38 92% 50%;
+    --accent-foreground: 240 33% 8%;
+
+    /* Pink Accent: #FF5BA8 */
+    --pink: 333 100% 68%;
+    --pink-foreground: 0 0% 100%;
 
     --destructive: 0 72% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 215 20% 18%;
-    --input: 215 20% 18%;
-    --ring: 199 89% 55%;
+    --border: 240 33% 18%;
+    --input: 240 33% 18%;
+    --ring: 261 96% 60%;
 
-    --gradient-primary: linear-gradient(135deg, hsl(199 89% 55%), hsl(172 66% 45%));
-    --gradient-hero: linear-gradient(180deg, hsl(215 25% 8%) 0%, hsl(215 30% 12%) 100%);
-    --gradient-card: linear-gradient(145deg, hsl(215 25% 13%) 0%, hsl(215 25% 11%) 100%);
-    --shadow-soft: 0 4px 20px -4px hsl(199 89% 55% / 0.2);
-    --shadow-glow: 0 0 40px hsl(199 89% 55% / 0.25);
+    --gradient-primary: linear-gradient(135deg, hsl(261 96% 60%), hsl(333 100% 68%));
+    --gradient-accent: linear-gradient(135deg, hsl(261 96% 60%), hsl(38 92% 50%));
+    --gradient-hero: linear-gradient(180deg, hsl(240 33% 8%) 0%, hsl(240 33% 12%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(240 33% 14%) 0%, hsl(240 33% 12%) 100%);
+    --shadow-soft: 0 4px 20px -4px hsl(261 96% 60% / 0.2);
+    --shadow-glow: 0 0 40px hsl(261 96% 60% / 0.25);
     --shadow-card: 0 4px 24px -8px hsl(0 0% 0% / 0.3);
 
-    --sidebar-background: 240 5.9% 10%;
+    --sidebar-background: 240 33% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary: 261 96% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent: 240 33% 15%;
     --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-border: 240 33% 15%;
+    --sidebar-ring: 261 96% 60%;
   }
 }
 

@@ -26,7 +26,8 @@ const Navbar = () => {
           {/* Logo */}
           <a href="/" className="flex items-center gap-2">
             <img src={vantahireLogo} alt="Vantahire AI Interviewer" className="w-9 h-9 rounded-lg object-cover" />
-            <span className="text-xl font-bold text-foreground">Vantahire AI Interviewer</span>
+            <span className="text-lg font-bold text-foreground hidden sm:inline">Vantahire AI Interviewer</span>
+            <span className="text-lg font-bold text-foreground sm:hidden">Vantahire</span>
           </a>
 
           {/* Desktop Navigation */}
