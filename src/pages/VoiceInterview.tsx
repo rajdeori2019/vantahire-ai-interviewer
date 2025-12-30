@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useCandidateAuth } from "@/hooks/useCandidateAuth";
 import { validateMessageContent, validateNotes } from "@/lib/validateInput";
@@ -76,6 +77,7 @@ const VoiceInterview = () => {
   
   const [showPreInterview, setShowPreInterview] = useState(true);
   const [candidateNotes, setCandidateNotes] = useState("");
+  const [hasConfirmedGuidelines, setHasConfirmedGuidelines] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
@@ -1051,12 +1053,28 @@ const VoiceInterview = () => {
               </p>
             </div>
 
+            {/* Confirmation Checkbox */}
+            <div className="flex items-start gap-3 p-4 bg-card rounded-xl border border-border">
+              <Checkbox
+                id="confirm-guidelines"
+                checked={hasConfirmedGuidelines}
+                onCheckedChange={(checked) => setHasConfirmedGuidelines(checked === true)}
+                className="mt-0.5"
+              />
+              <label 
+                htmlFor="confirm-guidelines" 
+                className="text-sm text-muted-foreground cursor-pointer leading-relaxed"
+              >
+                I have read and understood the guidelines above. I confirm that I will keep my camera and microphone on during the interview.
+              </label>
+            </div>
+
             {/* Start Button */}
             <Button
               variant="hero"
               size="lg"
               onClick={startInterview}
-              disabled={isConnecting}
+              disabled={isConnecting || !hasConfirmedGuidelines}
               className="w-full rounded-xl h-14 text-lg"
             >
               {isConnecting ? (
