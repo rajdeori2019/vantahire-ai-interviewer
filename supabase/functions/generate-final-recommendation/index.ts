@@ -43,12 +43,12 @@ serve(async (req) => {
       throw new Error("At least one transcript is required");
     }
 
-    const DEEPSEEK_API_KEY = Deno.env.get("DEEPSEEK_API_KEY");
-    if (!DEEPSEEK_API_KEY) {
-      throw new Error("DEEPSEEK_API_KEY is not configured");
+    const OPENROUTER_API_KEY = Deno.env.get("OPENROUTER_API_KEY");
+    if (!OPENROUTER_API_KEY) {
+      throw new Error("OPENROUTER_API_KEY is not configured");
     }
 
-    console.log("Generating final recommendation using DeepSeek for:", candidateName, jobRole);
+    console.log("Generating final recommendation using Nous Hermes 3 405B for:", candidateName, jobRole);
 
     const systemPrompt = `You are an expert HR analyst and interview evaluator. Your task is to analyze interview transcripts and provide a comprehensive, data-driven hiring recommendation.
 
@@ -111,14 +111,16 @@ Please provide your analysis in the following JSON format:
 
 Return ONLY valid JSON, no other text.`;
 
-    const response = await fetch("https://api.deepseek.com/chat/completions", {
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${DEEPSEEK_API_KEY}`,
+        Authorization: `Bearer ${OPENROUTER_API_KEY}`,
         "Content-Type": "application/json",
+        "HTTP-Referer": "https://vantahire.com",
+        "X-Title": "VantaHire Interview Analysis",
       },
       body: JSON.stringify({
-        model: "deepseek-chat",
+        model: "nousresearch/hermes-3-llama-3.1-405b:free",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt }
@@ -130,7 +132,7 @@ Return ONLY valid JSON, no other text.`;
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("DeepSeek API error:", response.status, errorText);
+      console.error("OpenRouter API error:", response.status, errorText);
       
       if (response.status === 429) {
         return new Response(JSON.stringify({ error: "Rate limits exceeded, please try again later." }), {
@@ -139,12 +141,12 @@ Return ONLY valid JSON, no other text.`;
         });
       }
       if (response.status === 402 || response.status === 401) {
-        return new Response(JSON.stringify({ error: "DeepSeek API key invalid or payment required." }), {
+        return new Response(JSON.stringify({ error: "OpenRouter API key invalid." }), {
           status: 402,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      throw new Error(`DeepSeek API error: ${response.status}`);
+      throw new Error(`OpenRouter API error: ${response.status}`);
     }
 
     const data = await response.json();
@@ -154,7 +156,7 @@ Return ONLY valid JSON, no other text.`;
       throw new Error("No content in DeepSeek response");
     }
 
-    console.log("Raw DeepSeek response:", content);
+    console.log("Raw OpenRouter response:", content);
 
     // Parse JSON from response (handle markdown code blocks)
     let recommendation: FinalRecommendation;
@@ -171,7 +173,7 @@ Return ONLY valid JSON, no other text.`;
       }
       recommendation = JSON.parse(jsonStr.trim());
     } catch (parseError) {
-      console.error("Failed to parse DeepSeek response:", parseError);
+      console.error("Failed to parse OpenRouter response:", parseError);
       // Return a fallback recommendation
       recommendation = {
         overallAssessment: "Analysis completed but structured output could not be generated. Please review the transcripts manually.",
