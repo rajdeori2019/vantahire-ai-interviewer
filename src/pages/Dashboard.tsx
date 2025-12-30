@@ -9,6 +9,7 @@ import WhatsAppStatusBadge from "@/components/WhatsAppStatusBadge";
 import { useWhatsAppStatus } from "@/hooks/useWhatsAppStatus";
 import AppLayout from "@/components/AppLayout";
 import PageLoadingSkeleton from "@/components/PageLoadingSkeleton";
+import OnboardingTour from "@/components/OnboardingTour";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -780,7 +781,7 @@ const Dashboard = () => {
       footer="minimal"
       headerRightContent={
         <>
-          <Button variant="ghost" size="sm" onClick={() => setSettingsDialogOpen(true)} title="Branding Settings">
+          <Button variant="ghost" size="sm" onClick={() => setSettingsDialogOpen(true)} title="Branding Settings" data-tour="settings">
             <Settings className="w-4 h-4" />
           </Button>
           <span className="text-sm text-muted-foreground hidden sm:block">
@@ -792,8 +793,11 @@ const Dashboard = () => {
         </>
       }
     >
+        {/* Onboarding Tour */}
+        <OnboardingTour isFirstVisit={!loading} />
+
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8" data-tour="stats">
           {[
             { label: "Total Interviews", value: stats.total, icon: Users },
             { label: "Completed", value: stats.completed, icon: TrendingUp },
@@ -820,12 +824,12 @@ const Dashboard = () => {
 
         {/* Tabs for Jobs and Interviews */}
         <Tabs defaultValue="jobs" className="space-y-6">
-          <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsList className="grid w-full max-w-md grid-cols-2" data-tour="tabs">
             <TabsTrigger value="jobs" className="flex items-center gap-2">
               <Briefcase className="w-4 h-4" />
               Jobs
             </TabsTrigger>
-            <TabsTrigger value="interviews" className="flex items-center gap-2">
+            <TabsTrigger value="interviews" className="flex items-center gap-2" data-tour="interviews-tab">
               <Users className="w-4 h-4" />
               All Interviews
             </TabsTrigger>
