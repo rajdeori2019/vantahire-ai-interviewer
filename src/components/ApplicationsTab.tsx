@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -14,6 +16,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import {
   Table,
@@ -40,6 +43,7 @@ import {
   Video,
   Play,
   Loader2,
+  UserPlus,
 } from "lucide-react";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import { format } from "date-fns";
@@ -95,6 +99,13 @@ const ApplicationsTab = ({ user }: ApplicationsTabProps) => {
   const [filterJob, setFilterJob] = useState<string>("all");
   const [jobs, setJobs] = useState<{ id: string; title: string }[]>([]);
   const [schedulingInterview, setSchedulingInterview] = useState<string | null>(null);
+  const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
+  const [applicationToSchedule, setApplicationToSchedule] = useState<JobApplication | null>(null);
+  const [candidateForm, setCandidateForm] = useState({
+    email: "",
+    name: "",
+    phone: ""
+  });
   const { toast } = useToast();
 
   const fetchApplications = async () => {
@@ -237,23 +248,32 @@ const ApplicationsTab = ({ user }: ApplicationsTabProps) => {
     }
   };
 
-  const scheduleInterview = async (application: JobApplication) => {
-    if (!user) return;
+  const openScheduleDialog = (application: JobApplication) => {
+    setApplicationToSchedule(application);
+    setCandidateForm({
+      email: application.candidate_profiles?.email || "",
+      name: application.candidate_profiles?.full_name || "",
+      phone: application.candidate_profiles?.phone || ""
+    });
+    setScheduleDialogOpen(true);
+  };
+
+  const scheduleInterview = async () => {
+    if (!user || !applicationToSchedule) return;
     
-    const candidateEmail = application.candidate_profiles?.email;
-    const candidateName = application.candidate_profiles?.full_name;
-    const jobTitle = application.jobs?.title;
+    const { email, name, phone } = candidateForm;
+    const jobTitle = applicationToSchedule.jobs?.title;
     
-    if (!candidateEmail) {
+    if (!email || !name || !phone) {
       toast({
         variant: "destructive",
         title: "Missing Information",
-        description: "Candidate email is required to schedule an interview",
+        description: "Please fill in all required fields",
       });
       return;
     }
     
-    setSchedulingInterview(application.id);
+    setSchedulingInterview(applicationToSchedule.id);
     
     try {
       // Create interview record
@@ -261,37 +281,34 @@ const ApplicationsTab = ({ user }: ApplicationsTabProps) => {
         .from("interviews")
         .insert({
           recruiter_id: user.id,
-          candidate_email: candidateEmail,
-          candidate_name: candidateName || null,
+          candidate_email: email,
+          candidate_name: name,
           job_role: jobTitle || "Position",
-          job_id: application.job_id,
+          job_id: applicationToSchedule.job_id,
           status: "pending",
           time_limit_minutes: 30,
-          candidate_resume_url: application.resume_url || null,
+          candidate_resume_url: applicationToSchedule.resume_url || null,
         })
         .select()
         .single();
 
       if (interviewError) throw interviewError;
 
-      // Update application status to interview_scheduled
-      await updateApplicationStatus(application.id, "interview_scheduled");
-
-      // Send interview invitation email
       const interviewUrl = `${window.location.origin}/voice-interview/${interview.id}`;
       
+      const { data: { session } } = await supabase.auth.getSession();
+      const accessToken = session?.access_token;
+      
+      // Send email invite
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        const accessToken = session?.access_token;
-        
         if (accessToken) {
           await supabase.functions.invoke("send-candidate-invite", {
             headers: {
               Authorization: `Bearer ${accessToken}`
             },
             body: {
-              candidateEmail,
-              candidateName,
+              candidateEmail: email,
+              candidateName: name,
               jobRole: jobTitle || "Position",
               interviewId: interview.id,
               interviewUrl,
@@ -300,27 +317,42 @@ const ApplicationsTab = ({ user }: ApplicationsTabProps) => {
           });
         }
       } catch (emailError) {
-        console.error("Failed to send interview invitation:", emailError);
-        // Don't fail the interview creation if email fails
+        console.error("Failed to send email invitation:", emailError);
       }
+
+      // Send WhatsApp invite
+      try {
+        if (accessToken) {
+          await supabase.functions.invoke("send-whatsapp-invite", {
+            headers: {
+              Authorization: `Bearer ${accessToken}`
+            },
+            body: {
+              candidateName: name,
+              candidatePhone: phone,
+              jobRole: jobTitle || "Position",
+              interviewId: interview.id,
+              interviewUrl
+            }
+          });
+        }
+      } catch (whatsappError) {
+        console.error("Failed to send WhatsApp invitation:", whatsappError);
+      }
+
+      // Remove the application from the list (moves to Interviews tab)
+      setApplications((prev) => prev.filter((app) => app.id !== applicationToSchedule.id));
+      
+      // Close dialogs
+      setScheduleDialogOpen(false);
+      setDetailsOpen(false);
+      setApplicationToSchedule(null);
+      setCandidateForm({ email: "", name: "", phone: "" });
 
       toast({
         title: "Interview Scheduled",
-        description: `AI interview created for ${candidateName || candidateEmail}. Invitation sent.`,
+        description: `AI interview created for ${name}. Invites sent via email and WhatsApp.`,
       });
-
-      // Update local state
-      setApplications((prev) =>
-        prev.map((app) =>
-          app.id === application.id
-            ? { ...app, status: "interview_scheduled", updated_at: new Date().toISOString() }
-            : app
-        )
-      );
-      
-      if (selectedApplication?.id === application.id) {
-        setSelectedApplication({ ...selectedApplication, status: "interview_scheduled" });
-      }
     } catch (error: any) {
       console.error("Error scheduling interview:", error);
       toast({
@@ -540,7 +572,7 @@ const ApplicationsTab = ({ user }: ApplicationsTabProps) => {
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => scheduleInterview(application)}
+                          onClick={() => openScheduleDialog(application)}
                           disabled={schedulingInterview === application.id}
                           title="Schedule AI Interview"
                           className="text-primary hover:text-primary"
@@ -731,27 +763,14 @@ const ApplicationsTab = ({ user }: ApplicationsTabProps) => {
                     Schedule AI Interview
                   </h3>
                   <p className="text-sm text-muted-foreground mb-4">
-                    Create an AI-powered interview for this candidate. They will receive an invitation email with the interview link.
+                    Create an AI-powered interview for this candidate. They will receive invitations via email and WhatsApp.
                   </p>
                   <Button
-                    onClick={() => {
-                      scheduleInterview(selectedApplication);
-                      setDetailsOpen(false);
-                    }}
-                    disabled={schedulingInterview === selectedApplication.id}
+                    onClick={() => openScheduleDialog(selectedApplication)}
                     className="w-full"
                   >
-                    {schedulingInterview === selectedApplication.id ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Scheduling...
-                      </>
-                    ) : (
-                      <>
-                        <Play className="w-4 h-4 mr-2" />
-                        Schedule Interview Now
-                      </>
-                    )}
+                    <Play className="w-4 h-4 mr-2" />
+                    Schedule Interview Now
                   </Button>
                 </div>
               )}
@@ -795,6 +814,98 @@ const ApplicationsTab = ({ user }: ApplicationsTabProps) => {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Schedule Interview Dialog */}
+      <Dialog open={scheduleDialogOpen} onOpenChange={setScheduleDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <UserPlus className="w-5 h-5" />
+              Schedule Interview
+            </DialogTitle>
+            <DialogDescription>
+              Add candidate details to schedule an interview for{" "}
+              <strong>{applicationToSchedule?.jobs?.title || "this position"}</strong>
+            </DialogDescription>
+          </DialogHeader>
+
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              scheduleInterview();
+            }}
+            className="space-y-4 mt-4"
+          >
+            <div className="space-y-2">
+              <Label htmlFor="schedule-email">Email *</Label>
+              <Input
+                id="schedule-email"
+                type="email"
+                placeholder="candidate@email.com"
+                value={candidateForm.email}
+                onChange={(e) => setCandidateForm({ ...candidateForm, email: e.target.value })}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="schedule-name">Name *</Label>
+              <Input
+                id="schedule-name"
+                placeholder="John Doe"
+                value={candidateForm.name}
+                onChange={(e) => setCandidateForm({ ...candidateForm, name: e.target.value })}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="schedule-phone">WhatsApp Number *</Label>
+              <Input
+                id="schedule-phone"
+                type="tel"
+                placeholder="+91 98765 43210"
+                value={candidateForm.phone}
+                onChange={(e) => setCandidateForm({ ...candidateForm, phone: e.target.value })}
+                required
+              />
+              <p className="text-xs text-muted-foreground">
+                Include country code for WhatsApp invite
+              </p>
+            </div>
+
+            <div className="flex gap-2 pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setScheduleDialogOpen(false);
+                  setApplicationToSchedule(null);
+                  setCandidateForm({ email: "", name: "", phone: "" });
+                }}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                variant="hero"
+                disabled={schedulingInterview !== null || !candidateForm.email || !candidateForm.name || !candidateForm.phone}
+                className="flex-1"
+              >
+                {schedulingInterview ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Scheduling...
+                  </>
+                ) : (
+                  "Add & Send Invite"
+                )}
+              </Button>
+            </div>
+          </form>
         </DialogContent>
       </Dialog>
     </div>
