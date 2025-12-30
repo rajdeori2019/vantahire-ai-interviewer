@@ -136,6 +136,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send WhatsApp message using Aisensy API
     // Template: vantahire_interview_invitation (APPROVED)
+    // Namespace ID: 4ed1fe77_db59_4fb2_8177_637be8a7eeb1
     // Parameters: [candidateName, jobRole, companyName, interviewUrl, companyName]
     const whatsappResponse = await fetch("https://backend.aisensy.com/campaign/t1/api/v2", {
       method: "POST",
@@ -144,7 +145,7 @@ const handler = async (req: Request): Promise<Response> => {
       },
       body: JSON.stringify({
         apiKey: AISENSY_API_KEY,
-        campaignName: "vantahire_interview_invitation",
+        campaignName: "4ed1fe77_db59_4fb2_8177_637be8a7eeb1",
         destination: cleanPhone,
         userName: displayName,
         templateParams: [
