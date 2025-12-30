@@ -71,11 +71,17 @@ const APIPreview = () => {
             </div>
 
             <div className="flex gap-4">
-              <Button variant="hero">
+              <Button 
+                variant="hero"
+                onClick={() => window.open("https://vantahire.com/docs/api", "_blank")}
+              >
                 View API Docs
                 <ExternalLink className="w-4 h-4" />
               </Button>
-              <Button variant="hero-outline">
+              <Button 
+                variant="hero-outline"
+                onClick={() => window.location.href = "/auth"}
+              >
                 Get API Key
               </Button>
             </div>
