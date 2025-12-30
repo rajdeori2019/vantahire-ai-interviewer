@@ -1,8 +1,7 @@
-import { useEffect, useState, useRef, useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
-import EmailPreview from "@/components/EmailPreview";
 import BulkInviteDialog from "@/components/BulkInviteDialog";
 import JobsTab from "@/components/JobsTab";
 import WhatsAppStatusBadge from "@/components/WhatsAppStatusBadge";
@@ -40,15 +39,10 @@ import {
   XCircle,
   HelpCircle,
   Video,
-  Mail,
   Settings,
-  Palette,
-  Upload,
-  X,
   Eye,
-  Sparkles,
-  Wand2,
   Briefcase,
+  Mail,
 } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 
@@ -105,7 +99,6 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [summaryDialogOpen, setSummaryDialogOpen] = useState(false);
-  const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
   const [selectedInterview, setSelectedInterview] = useState<Interview | null>(null);
   const [transcriptMessages, setTranscriptMessages] = useState<Array<{ role: string; content: string }>>([]);
   const [newInterview, setNewInterview] = useState({
@@ -123,12 +116,8 @@ const Dashboard = () => {
     email_tips: null,
     email_cta_text: null
   });
-  const [savingProfile, setSavingProfile] = useState(false);
-  const [uploadingLogo, setUploadingLogo] = useState(false);
-  const [improvingEmail, setImprovingEmail] = useState(false);
   const [bulkInviteOpen, setBulkInviteOpen] = useState(false);
   const [jobsCount, setJobsCount] = useState(0);
-  const logoInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -296,186 +285,6 @@ const Dashboard = () => {
     }
   };
 
-  const saveProfile = async () => {
-    if (!user) return;
-    setSavingProfile(true);
-    
-    try {
-      const { error } = await supabase
-        .from("profiles")
-        .update({
-          company_name: profile.company_name,
-          brand_color: profile.brand_color,
-          logo_url: profile.logo_url,
-          email_intro: profile.email_intro,
-          email_tips: profile.email_tips,
-          email_cta_text: profile.email_cta_text
-        })
-        .eq("id", user.id);
-
-      if (error) throw error;
-      
-      toast({
-        title: "Settings Saved",
-        description: "Your branding settings have been updated."
-      });
-      setSettingsDialogOpen(false);
-    } catch (error: any) {
-      console.error("Error saving profile:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to save settings"
-      });
-    } finally {
-      setSavingProfile(false);
-    }
-  };
-
-  const improveEmailWithAI = async () => {
-    setImprovingEmail(true);
-    
-    // Get fresh access token before calling edge function
-    const accessToken = await getFreshAccessToken();
-    if (!accessToken) {
-      setImprovingEmail(false);
-      return;
-    }
-    
-    try {
-      const { data, error } = await supabase.functions.invoke("improve-email-copy", {
-        headers: {
-          Authorization: `Bearer ${accessToken}`
-        },
-        body: {
-          currentIntro: profile.email_intro,
-          currentTips: profile.email_tips,
-          currentCta: profile.email_cta_text,
-          companyName: profile.company_name,
-          tone: "professional"
-        }
-      });
-
-      if (error) throw error;
-
-      if (data?.improved) {
-        setProfile({
-          ...profile,
-          email_intro: data.improved.intro || profile.email_intro,
-          email_tips: data.improved.tips || profile.email_tips,
-          email_cta_text: data.improved.cta || profile.email_cta_text
-        });
-        toast({
-          title: "Email Copy Improved",
-          description: "AI has enhanced your email content."
-        });
-      }
-    } catch (error: any) {
-      console.error("Error improving email:", error);
-      toast({
-        variant: "destructive",
-        title: "AI Enhancement Failed",
-        description: error.message || "Could not improve email copy. Please try again."
-      });
-    } finally {
-      setImprovingEmail(false);
-    }
-  };
-
-  const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file || !user) return;
-
-    // Validate file type
-    const allowedTypes = ['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/svg+xml'];
-    if (!allowedTypes.includes(file.type)) {
-      toast({
-        variant: "destructive",
-        title: "Invalid File Type",
-        description: "Please upload a PNG, JPG, GIF, WebP, or SVG image."
-      });
-      return;
-    }
-
-    // Validate file size (max 2MB)
-    if (file.size > 2 * 1024 * 1024) {
-      toast({
-        variant: "destructive",
-        title: "File Too Large",
-        description: "Logo must be less than 2MB."
-      });
-      return;
-    }
-
-    setUploadingLogo(true);
-
-    try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}/logo-${Date.now()}.${fileExt}`;
-
-      // Delete old logo if exists
-      if (profile.logo_url && profile.logo_url.includes('company-logos')) {
-        const oldPath = profile.logo_url.split('/company-logos/')[1];
-        if (oldPath) {
-          await supabase.storage.from('company-logos').remove([oldPath]);
-        }
-      }
-
-      // Upload new logo
-      const { error: uploadError } = await supabase.storage
-        .from('company-logos')
-        .upload(fileName, file, { upsert: true });
-
-      if (uploadError) throw uploadError;
-
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('company-logos')
-        .getPublicUrl(fileName);
-
-      setProfile({ ...profile, logo_url: publicUrl });
-      
-      toast({
-        title: "Logo Uploaded",
-        description: "Your company logo has been uploaded successfully."
-      });
-    } catch (error: any) {
-      console.error("Error uploading logo:", error);
-      toast({
-        variant: "destructive",
-        title: "Upload Failed",
-        description: "Could not upload logo. Please try again."
-      });
-    } finally {
-      setUploadingLogo(false);
-      if (logoInputRef.current) {
-        logoInputRef.current.value = '';
-      }
-    }
-  };
-
-  const removeLogo = async () => {
-    if (!user) return;
-
-    try {
-      // Delete from storage if it's our upload
-      if (profile.logo_url && profile.logo_url.includes('company-logos')) {
-        const oldPath = profile.logo_url.split('/company-logos/')[1];
-        if (oldPath) {
-          await supabase.storage.from('company-logos').remove([oldPath]);
-        }
-      }
-
-      setProfile({ ...profile, logo_url: null });
-      
-      toast({
-        title: "Logo Removed",
-        description: "Your company logo has been removed."
-      });
-    } catch (error: any) {
-      console.error("Error removing logo:", error);
-    }
-  };
 
   const fetchTranscript = async (interviewId: string) => {
     try {
@@ -1286,209 +1095,6 @@ const Dashboard = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Settings Dialog */}
-      <Dialog open={settingsDialogOpen} onOpenChange={setSettingsDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Palette className="w-5 h-5" />
-              Email Branding Settings
-            </DialogTitle>
-          </DialogHeader>
-          
-          <div className="space-y-6 mt-4">
-            <p className="text-sm text-muted-foreground">
-              Customize how your interview invitation and completion emails appear to candidates.
-            </p>
-            
-            <div className="space-y-2">
-              <Label htmlFor="companyName">Company Name</Label>
-              <Input
-                id="companyName"
-                type="text"
-                placeholder="Your Company Name"
-                value={profile.company_name || ""}
-                onChange={(e) => setProfile({...profile, company_name: e.target.value || null})}
-              />
-              <p className="text-xs text-muted-foreground">
-                This will appear in email headers and as the sender name.
-              </p>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="brandColor">Brand Color</Label>
-              <div className="flex gap-2">
-                <Input
-                  id="brandColor"
-                  type="color"
-                  value={profile.brand_color}
-                  onChange={(e) => setProfile({...profile, brand_color: e.target.value})}
-                  className="w-14 h-10 p-1 cursor-pointer"
-                />
-                <Input
-                  type="text"
-                  value={profile.brand_color}
-                  onChange={(e) => setProfile({...profile, brand_color: e.target.value})}
-                  placeholder="#6366f1"
-                  className="flex-1"
-                />
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Used for buttons, headers, and accent colors in emails.
-              </p>
-            </div>
-            
-            <div className="space-y-2">
-              <Label>Company Logo (optional)</Label>
-              <input
-                ref={logoInputRef}
-                type="file"
-                accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml"
-                onChange={handleLogoUpload}
-                className="hidden"
-              />
-              
-              {profile.logo_url ? (
-                <div className="flex items-center gap-3 p-3 bg-secondary/50 rounded-lg">
-                  <img 
-                    src={profile.logo_url} 
-                    alt="Company logo" 
-                    className="h-10 max-w-[120px] object-contain"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-foreground truncate">Logo uploaded</p>
-                  </div>
-                  <div className="flex gap-1">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => logoInputRef.current?.click()}
-                      disabled={uploadingLogo}
-                    >
-                      <Upload className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={removeLogo}
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => logoInputRef.current?.click()}
-                  disabled={uploadingLogo}
-                >
-                  {uploadingLogo ? (
-                    <>Uploading...</>
-                  ) : (
-                    <>
-                      <Upload className="w-4 h-4 mr-2" />
-                      Upload Logo
-                    </>
-                  )}
-                </Button>
-              )}
-              <p className="text-xs text-muted-foreground">
-                PNG, JPG, GIF, WebP, or SVG. Max 2MB.
-              </p>
-            </div>
-            
-            {/* Email Copy Customization */}
-            <div className="space-y-4 border-t border-border pt-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Mail className="w-4 h-4" />
-                  <Label className="text-base font-medium">Email Copy</Label>
-                </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={improveEmailWithAI}
-                  disabled={improvingEmail}
-                  className="gap-2"
-                >
-                  {improvingEmail ? (
-                    <>
-                      <Sparkles className="w-4 h-4 animate-pulse" />
-                      Improving...
-                    </>
-                  ) : (
-                    <>
-                      <Wand2 className="w-4 h-4" />
-                      Improve with AI
-                    </>
-                  )}
-                </Button>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="emailIntro">Introduction Text</Label>
-                <textarea
-                  id="emailIntro"
-                  placeholder="You've been invited to complete an AI-powered interview for the [Job Role] position."
-                  value={profile.email_intro || ""}
-                  onChange={(e) => setProfile({...profile, email_intro: e.target.value || null})}
-                  className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Appears after the greeting. Leave empty for default text.
-                </p>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="emailTips">Tips for Success</Label>
-                <textarea
-                  id="emailTips"
-                  placeholder="Find a quiet place with a stable internet connection. Speak clearly and take your time with each response."
-                  value={profile.email_tips || ""}
-                  onChange={(e) => setProfile({...profile, email_tips: e.target.value || null})}
-                  className="flex min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Helpful advice shown before the call-to-action button.
-                </p>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="emailCta">Button Text</Label>
-                <Input
-                  id="emailCta"
-                  type="text"
-                  placeholder="Start Your Interview"
-                  value={profile.email_cta_text || ""}
-                  onChange={(e) => setProfile({...profile, email_cta_text: e.target.value || null})}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Text displayed on the main action button.
-                </p>
-              </div>
-            </div>
-            
-            {/* Full Email Preview */}
-            <EmailPreview 
-              companyName={profile.company_name || ""}
-              brandColor={profile.brand_color}
-              logoUrl={profile.logo_url}
-              emailIntro={profile.email_intro || undefined}
-              emailTips={profile.email_tips || undefined}
-              emailCta={profile.email_cta_text || undefined}
-            />
-            
-            <Button onClick={saveProfile} variant="hero" className="w-full" disabled={savingProfile}>
-              {savingProfile ? "Saving..." : "Save Settings"}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </AppLayout>
   );
 };
