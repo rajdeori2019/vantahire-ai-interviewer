@@ -846,7 +846,7 @@ const Dashboard = () => {
               if (createBtn) createBtn.click();
             }, 100);
           }}
-          onOpenSettings={() => setSettingsDialogOpen(true)}
+          onOpenSettings={() => navigate("/settings")}
         />
 
         {/* Stats */}
