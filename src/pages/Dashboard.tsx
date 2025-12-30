@@ -815,7 +815,7 @@ const Dashboard = () => {
       footer="minimal"
       headerRightContent={
         <>
-          <Button variant="ghost" size="sm" onClick={() => setSettingsDialogOpen(true)} title="Branding Settings" data-tour="settings">
+          <Button variant="ghost" size="sm" onClick={() => navigate("/settings")} title="Settings" data-tour="settings">
             <Settings className="w-4 h-4" />
           </Button>
           <span className="text-sm text-muted-foreground hidden sm:block">
