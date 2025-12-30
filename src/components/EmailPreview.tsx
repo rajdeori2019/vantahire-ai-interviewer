@@ -27,8 +27,9 @@ const EmailPreview = ({
   emailTips,
   emailCta 
 }: EmailPreviewProps) => {
-  const displayName = companyName || "Your Company";
-  const gradientEnd = adjustColor(brandColor, 20);
+  const displayName = companyName || "Vantahire";
+  const effectiveBrandColor = brandColor || "#7B38FB"; // Vantahire Purple Primary
+  const gradientEnd = adjustColor(effectiveBrandColor, 20);
   
   const introText = emailIntro || `You've been invited to complete an AI-powered interview for the Software Engineer position at ${displayName}.`;
   const tipsText = emailTips || "Find a quiet place with a stable internet connection. Speak clearly and take your time.";
@@ -47,7 +48,7 @@ const EmailPreview = ({
             {/* Header */}
             <div 
               className="p-6 text-center"
-              style={{ background: `linear-gradient(135deg, ${brandColor} 0%, ${gradientEnd} 100%)` }}
+              style={{ background: `linear-gradient(135deg, ${effectiveBrandColor} 0%, ${gradientEnd} 100%)` }}
             >
               {logoUrl && (
                 <img 
@@ -57,8 +58,8 @@ const EmailPreview = ({
                   onError={(e) => (e.currentTarget.style.display = 'none')}
                 />
               )}
-              <h1 className="text-white font-bold text-xl m-0">{displayName}</h1>
-              <p className="text-white/90 text-xs mt-1">AI-Powered Interview Platform</p>
+              <h1 className="text-white font-bold text-xl m-0">Vantahire AI Interview</h1>
+              <p className="text-white/90 text-xs mt-1">Powered by Vantahire ATS</p>
             </div>
             
             {/* Body */}
@@ -88,8 +89,8 @@ const EmailPreview = ({
                 <button 
                   className="text-white font-semibold py-3 px-6 rounded-lg text-sm cursor-default"
                   style={{ 
-                    background: `linear-gradient(135deg, ${brandColor} 0%, ${gradientEnd} 100%)`,
-                    boxShadow: `0 4px 14px ${brandColor}66`
+                    background: `linear-gradient(135deg, ${effectiveBrandColor} 0%, ${gradientEnd} 100%)`,
+                    boxShadow: `0 4px 14px ${effectiveBrandColor}66`
                   }}
                 >
                   {ctaText}

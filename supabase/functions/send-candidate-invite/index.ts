@@ -129,7 +129,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Fetch recruiter branding
     let branding: RecruiterBranding = {
       company_name: null,
-      brand_color: "#6366f1",
+      brand_color: "#7B38FB", // Vantahire Purple Primary
       logo_url: null,
       email_intro: null,
       email_tips: null,
@@ -154,8 +154,8 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const displayName = candidateName || "Candidate";
-    const companyName = branding.company_name || "InterviewAI";
-    const brandColor = branding.brand_color || '#6366f1';
+    const companyName = branding.company_name || "Vantahire";
+    const brandColor = branding.brand_color || '#7B38FB'; // Vantahire Purple Primary
     const brandColorLight = brandColor + '33'; // Add transparency for light version
     
     // Custom email copy with fallbacks
@@ -182,8 +182,8 @@ const handler = async (req: Request): Promise<Response> => {
                 <tr>
                   <td style="background: linear-gradient(135deg, ${brandColor} 0%, ${gradientEnd} 100%); padding: 40px 40px; text-align: center;">
                     ${branding.logo_url ? `<img src="${branding.logo_url}" alt="${companyName}" style="max-height: 50px; max-width: 200px; margin-bottom: 16px;">` : ''}
-                    <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 700;">${companyName}</h1>
-                    <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0 0; font-size: 14px;">AI-Powered Interview Platform</p>
+                    <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 700;">Vantahire AI Interview</h1>
+                    <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0 0; font-size: 14px;">Powered by Vantahire ATS</p>
                   </td>
                 </tr>
                 
@@ -254,7 +254,7 @@ const handler = async (req: Request): Promise<Response> => {
       },
       body: JSON.stringify({
         sender: {
-          name: companyName,
+          name: "Vantahire AI Interview",
           email: "hello@vantahire.com",
         },
         to: [
@@ -263,7 +263,7 @@ const handler = async (req: Request): Promise<Response> => {
             name: displayName,
           },
         ],
-        subject: `You're Invited: AI Interview for ${jobRole} Position${branding.company_name ? ` at ${branding.company_name}` : ''}`,
+        subject: `You're Invited: Vantahire AI Interview for ${jobRole} Position`,
         htmlContent: htmlContent,
       }),
     });
