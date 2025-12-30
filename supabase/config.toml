@@ -29,3 +29,6 @@ verify_jwt = false
 
 [functions.send-application-notification]
 verify_jwt = false
+
+[functions.brevo-webhook]
+verify_jwt = false
