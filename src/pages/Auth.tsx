@@ -55,7 +55,10 @@ const Auth = () => {
           password,
           options: {
             emailRedirectTo: `${window.location.origin}/verify-email`,
-            data: { full_name: fullName }
+            data: { 
+              full_name: fullName,
+              role: 'recruiter'
+            }
           }
         });
         if (error) throw error;
@@ -148,7 +151,7 @@ const Auth = () => {
   const renderAuthForm = () => (
     <>
       <h2 className="text-2xl font-bold text-foreground text-center mb-2">
-        {view === "login" ? "Welcome Back" : "Create Account"}
+        {view === "login" ? "Welcome Back" : "Create Recruiter Account"}
       </h2>
       <p className="text-muted-foreground text-center mb-6">
         {view === "login" 
@@ -224,7 +227,7 @@ const Auth = () => {
         </Button>
       </form>
 
-      <div className="mt-6 text-center">
+      <div className="mt-6 text-center space-y-3">
         <button
           type="button"
           onClick={() => setView(view === "login" ? "signup" : "login")}
@@ -234,6 +237,13 @@ const Auth = () => {
             ? "Don't have an account? Sign up" 
             : "Already have an account? Sign in"}
         </button>
+        
+        <p className="text-sm text-muted-foreground">
+          Are you a candidate?{" "}
+          <a href="/candidate/auth" className="text-primary hover:underline">
+            Access candidate portal
+          </a>
+        </p>
       </div>
     </>
   );
