@@ -280,6 +280,30 @@ export type Database = {
         }
         Relationships: []
       }
+      onboarding_reminders: {
+        Row: {
+          id: string
+          reminder_type: string
+          sent_at: string
+          tasks_pending: string[]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          reminder_type: string
+          sent_at?: string
+          tasks_pending: string[]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          reminder_type?: string
+          sent_at?: string
+          tasks_pending?: string[]
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           brand_color: string | null
