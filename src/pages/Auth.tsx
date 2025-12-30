@@ -83,10 +83,12 @@ const Auth = () => {
       >
         {/* Logo */}
         <div className="flex items-center justify-center gap-2 mb-8">
-          <div className="w-10 h-10 rounded-lg gradient-bg flex items-center justify-center">
-            <Zap className="w-6 h-6 text-primary-foreground" />
-          </div>
-          <span className="text-2xl font-bold text-foreground">InterviewAI</span>
+          <img 
+            src="/vantahire-logo-2026.jpg" 
+            alt="Vantahire" 
+            className="w-10 h-10 rounded-lg object-cover"
+          />
+          <span className="text-2xl font-bold text-foreground">Vantahire AI Interview</span>
         </div>
 
         {/* Card */}
