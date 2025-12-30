@@ -135,6 +135,54 @@ export type Database = {
           },
         ]
       }
+      candidate_profiles: {
+        Row: {
+          bio: string | null
+          created_at: string
+          email: string | null
+          experience_years: number | null
+          full_name: string | null
+          id: string
+          linkedin_url: string | null
+          phone: string | null
+          portfolio_url: string | null
+          resume_url: string | null
+          skills: string[] | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bio?: string | null
+          created_at?: string
+          email?: string | null
+          experience_years?: number | null
+          full_name?: string | null
+          id?: string
+          linkedin_url?: string | null
+          phone?: string | null
+          portfolio_url?: string | null
+          resume_url?: string | null
+          skills?: string[] | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bio?: string | null
+          created_at?: string
+          email?: string | null
+          experience_years?: number | null
+          full_name?: string | null
+          id?: string
+          linkedin_url?: string | null
+          phone?: string | null
+          portfolio_url?: string | null
+          resume_url?: string | null
+          skills?: string[] | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       interview_messages: {
         Row: {
           content: string
@@ -173,6 +221,7 @@ export type Database = {
           candidate_name: string | null
           candidate_notes: string | null
           candidate_resume_url: string | null
+          candidate_user_id: string | null
           completed_at: string | null
           created_at: string
           expires_at: string | null
@@ -193,6 +242,7 @@ export type Database = {
           candidate_name?: string | null
           candidate_notes?: string | null
           candidate_resume_url?: string | null
+          candidate_user_id?: string | null
           completed_at?: string | null
           created_at?: string
           expires_at?: string | null
@@ -213,6 +263,7 @@ export type Database = {
           candidate_name?: string | null
           candidate_notes?: string | null
           candidate_resume_url?: string | null
+          candidate_user_id?: string | null
           completed_at?: string | null
           created_at?: string
           expires_at?: string | null
@@ -358,6 +409,27 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["user_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["user_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["user_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       whatsapp_messages: {
         Row: {
           candidate_phone: string
@@ -438,6 +510,17 @@ export type Database = {
           time_limit_minutes: number
         }[]
       }
+      get_user_role: {
+        Args: { _user_id: string }
+        Returns: Database["public"]["Enums"]["user_role"]
+      }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["user_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       insert_interview_message: {
         Args: { p_content: string; p_interview_id: string; p_role: string }
         Returns: string
@@ -465,6 +548,7 @@ export type Database = {
     Enums: {
       api_key_status: "active" | "revoked" | "expired"
       subscription_status: "free" | "paid" | "enterprise"
+      user_role: "recruiter" | "candidate"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -594,6 +678,7 @@ export const Constants = {
     Enums: {
       api_key_status: ["active", "revoked", "expired"],
       subscription_status: ["free", "paid", "enterprise"],
+      user_role: ["recruiter", "candidate"],
     },
   },
 } as const
