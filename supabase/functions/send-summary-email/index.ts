@@ -22,6 +22,7 @@ interface SendSummaryEmailRequest {
   keyTakeaways: string[];
   senderName: string;
   companyName: string;
+  videoUrl?: string;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -98,6 +99,17 @@ const handler = async (req: Request): Promise<Response> => {
         </div>
         ` : ''}
       </div>
+
+      ${requestData.videoUrl ? `
+      <!-- Video Recording -->
+      <div style="margin-bottom: 25px; padding: 20px; background: #fef3c7; border-left: 4px solid #f59e0b; border-radius: 0 10px 10px 0;">
+        <h3 style="margin: 0 0 10px 0; color: #92400e; font-size: 16px;">🎥 Video Recording Available</h3>
+        <p style="margin: 0 0 15px 0; color: #4b5563; line-height: 1.6;">Watch the full interview recording to get a complete assessment of the candidate.</p>
+        <a href="${requestData.videoUrl}" style="display: inline-block; background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%); color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">▶ Watch Recording</a>
+        <p style="margin: 15px 0 0 0; color: #9ca3af; font-size: 12px;">⚠️ This link expires in 7 days. Please download if you need to keep the recording.</p>
+      </div>
+      ` : ''}
+
 
       <!-- AI Summary -->
       <div style="margin-bottom: 25px; padding: 20px; background: #faf5ff; border-left: 4px solid #8b5cf6; border-radius: 0 10px 10px 0;">
