@@ -62,6 +62,12 @@ import {
   Send,
   Link,
   Loader2,
+  Award,
+  AlertTriangle,
+  ThumbsUp,
+  ThumbsDown,
+  Target,
+  Sparkles,
 } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 interface Interview {
@@ -154,6 +160,32 @@ const Dashboard = () => {
   const [transcribingVideo, setTranscribingVideo] = useState(false);
   const [videoCurrentTime, setVideoCurrentTime] = useState(0);
   const [showTranscriptComparison, setShowTranscriptComparison] = useState(false);
+  const [finalRecommendation, setFinalRecommendation] = useState<{
+    overallAssessment: string;
+    hiringRecommendation: "Strongly Recommend" | "Recommend" | "Proceed with Caution" | "Do Not Recommend";
+    confidenceScore: number;
+    keyFindings: {
+      consistencies: string[];
+      discrepancies: string[];
+    };
+    communicationAnalysis: {
+      clarity: number;
+      confidence: number;
+      professionalTone: number;
+      observations: string[];
+    };
+    technicalAssessment: {
+      score: number;
+      strengths: string[];
+      gaps: string[];
+    };
+    cultureFitIndicators: string[];
+    redFlags: string[];
+    greenFlags: string[];
+    finalVerdict: string;
+    suggestedNextSteps: string[];
+  } | null>(null);
+  const [generatingRecommendation, setGeneratingRecommendation] = useState(false);
   const [profile, setProfile] = useState<RecruiterProfile>({
     company_name: null,
     brand_color: '#6366f1',
@@ -756,6 +788,7 @@ const Dashboard = () => {
     setVideoTranscriptionDetailed([]);
     setVideoCurrentTime(0);
     setShowTranscriptComparison(false);
+    setFinalRecommendation(null);
     await fetchTranscript(interview.id);
     
     // Load recording URL if available
@@ -774,6 +807,158 @@ const Dashboard = () => {
       } finally {
         setLoadingRecording(false);
       }
+    }
+  };
+
+  const generateFinalRecommendation = async () => {
+    if (!selectedInterview) return;
+    
+    setGeneratingRecommendation(true);
+    try {
+      const chatTranscriptText = transcriptMessages
+        .map(msg => `${msg.role === "user" ? "Candidate" : "AI Interviewer"}: ${msg.content}`)
+        .join("\n\n");
+      
+      const existingSummary = parseSummary(selectedInterview.transcript_summary);
+      
+      const { data, error } = await supabase.functions.invoke("generate-final-recommendation", {
+        body: {
+          videoTranscription: videoTranscription || "",
+          chatTranscript: chatTranscriptText,
+          candidateName: selectedInterview.candidate_name || selectedInterview.candidate_email,
+          jobRole: selectedInterview.job_role,
+          existingSummary
+        }
+      });
+
+      if (error) throw error;
+      
+      if (data?.recommendation) {
+        setFinalRecommendation(data.recommendation);
+        toast({
+          title: "Recommendation Generated",
+          description: "Final hiring recommendation has been generated."
+        });
+      } else {
+        throw new Error("No recommendation in response");
+      }
+    } catch (error: any) {
+      console.error("Failed to generate recommendation:", error);
+      toast({
+        variant: "destructive",
+        title: "Generation Failed",
+        description: error.message || "Could not generate final recommendation. Please try again."
+      });
+    } finally {
+      setGeneratingRecommendation(false);
+    }
+  };
+
+  const downloadFinalRecommendation = () => {
+    if (!finalRecommendation || !selectedInterview) return;
+    
+    const content = `FINAL INTERVIEW RECOMMENDATION
+========================================
+
+CANDIDATE: ${selectedInterview.candidate_name || selectedInterview.candidate_email}
+POSITION: ${selectedInterview.job_role}
+DATE: ${new Date().toLocaleDateString()}
+
+----------------------------------------
+OVERALL ASSESSMENT
+----------------------------------------
+${finalRecommendation.overallAssessment}
+
+HIRING RECOMMENDATION: ${finalRecommendation.hiringRecommendation}
+CONFIDENCE SCORE: ${finalRecommendation.confidenceScore}%
+
+----------------------------------------
+FINAL VERDICT
+----------------------------------------
+${finalRecommendation.finalVerdict}
+
+----------------------------------------
+KEY FINDINGS
+----------------------------------------
+
+Consistencies (Video vs Chat):
+${finalRecommendation.keyFindings.consistencies.map(c => `• ${c}`).join('\n')}
+
+Discrepancies:
+${finalRecommendation.keyFindings.discrepancies.length > 0 
+  ? finalRecommendation.keyFindings.discrepancies.map(d => `• ${d}`).join('\n')
+  : '• No significant discrepancies found'}
+
+----------------------------------------
+COMMUNICATION ANALYSIS
+----------------------------------------
+Clarity: ${finalRecommendation.communicationAnalysis.clarity}/10
+Confidence: ${finalRecommendation.communicationAnalysis.confidence}/10
+Professional Tone: ${finalRecommendation.communicationAnalysis.professionalTone}/10
+
+Observations:
+${finalRecommendation.communicationAnalysis.observations.map(o => `• ${o}`).join('\n')}
+
+----------------------------------------
+TECHNICAL ASSESSMENT
+----------------------------------------
+Score: ${finalRecommendation.technicalAssessment.score}/10
+
+Strengths:
+${finalRecommendation.technicalAssessment.strengths.map(s => `• ${s}`).join('\n')}
+
+Areas for Improvement:
+${finalRecommendation.technicalAssessment.gaps.map(g => `• ${g}`).join('\n')}
+
+----------------------------------------
+GREEN FLAGS
+----------------------------------------
+${finalRecommendation.greenFlags.map(g => `✓ ${g}`).join('\n')}
+
+----------------------------------------
+RED FLAGS
+----------------------------------------
+${finalRecommendation.redFlags.length > 0 
+  ? finalRecommendation.redFlags.map(r => `⚠ ${r}`).join('\n')
+  : '• No significant red flags identified'}
+
+----------------------------------------
+CULTURE FIT INDICATORS
+----------------------------------------
+${finalRecommendation.cultureFitIndicators.map(c => `• ${c}`).join('\n')}
+
+----------------------------------------
+SUGGESTED NEXT STEPS
+----------------------------------------
+${finalRecommendation.suggestedNextSteps.map((s, i) => `${i + 1}. ${s}`).join('\n')}
+
+========================================
+Generated by VantaHire AI Interview Platform
+`;
+
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `final-recommendation-${selectedInterview.candidate_name || 'candidate'}-${new Date().toISOString().split('T')[0]}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    toast({
+      title: "Downloaded",
+      description: "Final recommendation saved to file."
+    });
+  };
+
+  const getRecommendationColor = (rec: string) => {
+    switch (rec) {
+      case "Strongly Recommend": return "bg-accent/20 text-accent border-accent/40";
+      case "Recommend": return "bg-green-500/20 text-green-400 border-green-500/40";
+      case "Proceed with Caution": return "bg-amber-500/20 text-amber-400 border-amber-500/40";
+      case "Do Not Recommend": return "bg-destructive/20 text-destructive border-destructive/40";
+      default: return "bg-muted text-muted-foreground border-border";
     }
   };
 
@@ -1824,8 +2009,193 @@ Generated by VantaHire
                           Differences may occur due to speech patterns, filler words, or interruptions not captured in text.
                         </p>
                       </div>
+
+                      {/* Generate Final Recommendation Button */}
+                      <div className="mt-4 flex justify-center">
+                        <Button
+                          onClick={generateFinalRecommendation}
+                          disabled={generatingRecommendation || (!videoTranscription && transcriptMessages.length === 0)}
+                          className="gap-2"
+                        >
+                          {generatingRecommendation ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              Analyzing Transcripts...
+                            </>
+                          ) : (
+                            <>
+                              <Sparkles className="w-4 h-4" />
+                              Generate Final Recommendation
+                            </>
+                          )}
+                        </Button>
+                      </div>
                     </div>
                   )}
+                </div>
+              )}
+
+              {/* Final AI Recommendation */}
+              {finalRecommendation && (
+                <div className="p-4 bg-card rounded-xl border-2 border-primary/30 shadow-lg">
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="font-semibold text-foreground flex items-center gap-2">
+                      <Award className="w-5 h-5 text-primary" /> Final AI Recommendation
+                    </h4>
+                    <Button variant="outline" size="sm" onClick={downloadFinalRecommendation}>
+                      <Download className="w-4 h-4 mr-2" />
+                      Download Report
+                    </Button>
+                  </div>
+
+                  {/* Hiring Recommendation Badge */}
+                  <div className="flex items-center justify-center mb-6">
+                    <div className={`px-6 py-3 rounded-full border-2 ${getRecommendationColor(finalRecommendation.hiringRecommendation)}`}>
+                      <div className="flex items-center gap-3">
+                        {finalRecommendation.hiringRecommendation === "Strongly Recommend" || finalRecommendation.hiringRecommendation === "Recommend" ? (
+                          <ThumbsUp className="w-6 h-6" />
+                        ) : finalRecommendation.hiringRecommendation === "Do Not Recommend" ? (
+                          <ThumbsDown className="w-6 h-6" />
+                        ) : (
+                          <AlertTriangle className="w-6 h-6" />
+                        )}
+                        <div className="text-center">
+                          <div className="text-lg font-bold">{finalRecommendation.hiringRecommendation}</div>
+                          <div className="text-xs opacity-80">Confidence: {finalRecommendation.confidenceScore}%</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Overall Assessment */}
+                  <div className="bg-secondary/30 p-4 rounded-lg mb-4">
+                    <h5 className="font-medium text-foreground mb-2">Overall Assessment</h5>
+                    <p className="text-sm text-muted-foreground">{finalRecommendation.overallAssessment}</p>
+                  </div>
+
+                  {/* Final Verdict */}
+                  <div className="bg-primary/10 p-4 rounded-lg mb-4 border border-primary/30">
+                    <h5 className="font-medium text-primary mb-2 flex items-center gap-2">
+                      <Target className="w-4 h-4" /> Final Verdict
+                    </h5>
+                    <p className="text-sm text-foreground font-medium">{finalRecommendation.finalVerdict}</p>
+                  </div>
+
+                  {/* Scores Grid */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                    <div className="bg-background/50 p-3 rounded-lg text-center">
+                      <div className="text-2xl font-bold text-primary">{finalRecommendation.communicationAnalysis.clarity}/10</div>
+                      <div className="text-xs text-muted-foreground">Clarity</div>
+                    </div>
+                    <div className="bg-background/50 p-3 rounded-lg text-center">
+                      <div className="text-2xl font-bold text-accent">{finalRecommendation.communicationAnalysis.confidence}/10</div>
+                      <div className="text-xs text-muted-foreground">Confidence</div>
+                    </div>
+                    <div className="bg-background/50 p-3 rounded-lg text-center">
+                      <div className="text-2xl font-bold text-foreground">{finalRecommendation.communicationAnalysis.professionalTone}/10</div>
+                      <div className="text-xs text-muted-foreground">Professional Tone</div>
+                    </div>
+                    <div className="bg-background/50 p-3 rounded-lg text-center">
+                      <div className="text-2xl font-bold text-foreground">{finalRecommendation.technicalAssessment.score}/10</div>
+                      <div className="text-xs text-muted-foreground">Technical</div>
+                    </div>
+                  </div>
+
+                  {/* Key Findings */}
+                  <div className="grid md:grid-cols-2 gap-4 mb-4">
+                    {/* Green Flags */}
+                    <div className="bg-accent/5 p-3 rounded-lg border border-accent/20">
+                      <h6 className="font-medium text-accent mb-2 flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4" /> Green Flags
+                      </h6>
+                      <ul className="space-y-1">
+                        {finalRecommendation.greenFlags.map((flag, idx) => (
+                          <li key={idx} className="text-sm text-muted-foreground flex items-start gap-2">
+                            <span className="text-accent mt-1">✓</span> {flag}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    {/* Red Flags */}
+                    <div className="bg-destructive/5 p-3 rounded-lg border border-destructive/20">
+                      <h6 className="font-medium text-destructive mb-2 flex items-center gap-2">
+                        <AlertTriangle className="w-4 h-4" /> Red Flags
+                      </h6>
+                      {finalRecommendation.redFlags.length > 0 ? (
+                        <ul className="space-y-1">
+                          {finalRecommendation.redFlags.map((flag, idx) => (
+                            <li key={idx} className="text-sm text-muted-foreground flex items-start gap-2">
+                              <span className="text-destructive mt-1">⚠</span> {flag}
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">No significant red flags identified.</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Video vs Chat Comparison */}
+                  {(finalRecommendation.keyFindings.consistencies.length > 0 || finalRecommendation.keyFindings.discrepancies.length > 0) && (
+                    <div className="bg-secondary/20 p-3 rounded-lg mb-4">
+                      <h6 className="font-medium text-foreground mb-2 flex items-center gap-2">
+                        <Eye className="w-4 h-4" /> Video vs Chat Comparison
+                      </h6>
+                      {finalRecommendation.keyFindings.consistencies.length > 0 && (
+                        <div className="mb-2">
+                          <p className="text-xs text-muted-foreground uppercase font-medium mb-1">Consistencies</p>
+                          <ul className="space-y-1">
+                            {finalRecommendation.keyFindings.consistencies.map((item, idx) => (
+                              <li key={idx} className="text-sm text-muted-foreground">• {item}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      {finalRecommendation.keyFindings.discrepancies.length > 0 && (
+                        <div>
+                          <p className="text-xs text-muted-foreground uppercase font-medium mb-1">Discrepancies</p>
+                          <ul className="space-y-1">
+                            {finalRecommendation.keyFindings.discrepancies.map((item, idx) => (
+                              <li key={idx} className="text-sm text-amber-400">• {item}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Technical Assessment */}
+                  <div className="grid md:grid-cols-2 gap-4 mb-4">
+                    <div className="bg-background/50 p-3 rounded-lg">
+                      <h6 className="font-medium text-foreground mb-2">Technical Strengths</h6>
+                      <ul className="space-y-1">
+                        {finalRecommendation.technicalAssessment.strengths.map((strength, idx) => (
+                          <li key={idx} className="text-sm text-muted-foreground">• {strength}</li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div className="bg-background/50 p-3 rounded-lg">
+                      <h6 className="font-medium text-foreground mb-2">Areas for Growth</h6>
+                      <ul className="space-y-1">
+                        {finalRecommendation.technicalAssessment.gaps.map((gap, idx) => (
+                          <li key={idx} className="text-sm text-muted-foreground">• {gap}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+
+                  {/* Suggested Next Steps */}
+                  <div className="bg-primary/5 p-3 rounded-lg border border-primary/20">
+                    <h6 className="font-medium text-primary mb-2">Suggested Next Steps</h6>
+                    <ol className="space-y-1">
+                      {finalRecommendation.suggestedNextSteps.map((step, idx) => (
+                        <li key={idx} className="text-sm text-muted-foreground">
+                          <span className="text-primary font-medium">{idx + 1}.</span> {step}
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
                 </div>
               )}
 

@@ -38,3 +38,6 @@ verify_jwt = false
 
 [functions.transcribe-video]
 verify_jwt = false
+
+[functions.generate-final-recommendation]
+verify_jwt = false
