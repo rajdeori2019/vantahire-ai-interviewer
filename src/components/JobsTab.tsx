@@ -24,6 +24,8 @@ import {
   AlertCircle,
   Copy,
   ExternalLink,
+  RefreshCw,
+  MessageCircle,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -56,6 +58,10 @@ interface Interview {
   job_id: string | null;
 }
 
+interface ResendingState {
+  [key: string]: { email: boolean; whatsapp: boolean };
+}
+
 interface JobsTabProps {
   user: User | null;
 }
@@ -69,6 +75,7 @@ const JobsTab = ({ user }: JobsTabProps) => {
   const [addCandidateOpen, setAddCandidateOpen] = useState(false);
   const [bulkInviteOpen, setBulkInviteOpen] = useState(false);
   const [expandedJobId, setExpandedJobId] = useState<string | null>(null);
+  const [resending, setResending] = useState<ResendingState>({});
   const { toast } = useToast();
 
   useEffect(() => {
@@ -351,6 +358,100 @@ const JobsTab = ({ user }: JobsTabProps) => {
     }
 
     return results;
+  };
+
+  const resendEmailInvite = async (interview: Interview) => {
+    if (!user) return;
+
+    setResending(prev => ({
+      ...prev,
+      [interview.id]: { ...prev[interview.id], email: true }
+    }));
+
+    try {
+      const accessToken = await getFreshAccessToken();
+      if (!accessToken) {
+        throw new Error("Session expired");
+      }
+
+      const interviewUrl = `${window.location.origin}/voice-interview/${interview.id}`;
+
+      await supabase.functions.invoke("send-candidate-invite", {
+        headers: { Authorization: `Bearer ${accessToken}` },
+        body: {
+          candidateEmail: interview.candidate_email,
+          candidateName: interview.candidate_name || null,
+          jobRole: interview.job_role,
+          interviewId: interview.id,
+          interviewUrl,
+          recruiterId: user.id
+        }
+      });
+
+      toast({
+        title: "Email Sent",
+        description: `Interview invitation resent to ${interview.candidate_email}`
+      });
+    } catch (error: any) {
+      console.error("Resend email error:", error);
+      toast({
+        variant: "destructive",
+        title: "Failed to Send",
+        description: error.message || "Could not resend email invitation"
+      });
+    } finally {
+      setResending(prev => ({
+        ...prev,
+        [interview.id]: { ...prev[interview.id], email: false }
+      }));
+    }
+  };
+
+  const resendWhatsAppInvite = async (interview: Interview, phone: string) => {
+    if (!user) return;
+
+    setResending(prev => ({
+      ...prev,
+      [interview.id]: { ...prev[interview.id], whatsapp: true }
+    }));
+
+    try {
+      const accessToken = await getFreshAccessToken();
+      if (!accessToken) {
+        throw new Error("Session expired");
+      }
+
+      const interviewUrl = `${window.location.origin}/voice-interview/${interview.id}`;
+
+      await supabase.functions.invoke("send-whatsapp-invite", {
+        headers: { Authorization: `Bearer ${accessToken}` },
+        body: {
+          candidatePhone: phone,
+          candidateName: interview.candidate_name || null,
+          jobRole: interview.job_role,
+          interviewId: interview.id,
+          interviewUrl,
+          recruiterId: user.id
+        }
+      });
+
+      toast({
+        title: "WhatsApp Sent",
+        description: `Interview invitation resent via WhatsApp`
+      });
+    } catch (error: any) {
+      console.error("Resend WhatsApp error:", error);
+      toast({
+        variant: "destructive",
+        title: "Failed to Send",
+        description: error.message || "Could not resend WhatsApp invitation"
+      });
+    } finally {
+      setResending(prev => ({
+        ...prev,
+        [interview.id]: { ...prev[interview.id], whatsapp: false }
+      }));
+    }
   };
 
   const deleteJob = async (jobId: string) => {
@@ -637,6 +738,44 @@ const JobsTab = ({ user }: JobsTabProps) => {
                                 >
                                   <ExternalLink className="w-3 h-3" />
                                 </Button>
+                                
+                                {/* Resend Invite Dropdown */}
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      disabled={resending[candidate.id]?.email || resending[candidate.id]?.whatsapp}
+                                    >
+                                      {resending[candidate.id]?.email || resending[candidate.id]?.whatsapp ? (
+                                        <RefreshCw className="w-3 h-3 animate-spin" />
+                                      ) : (
+                                        <RefreshCw className="w-3 h-3" />
+                                      )}
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuItem
+                                      onClick={() => resendEmailInvite(candidate)}
+                                      disabled={resending[candidate.id]?.email}
+                                    >
+                                      <Mail className="w-4 h-4 mr-2" />
+                                      Resend Email
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      onClick={() => {
+                                        const phone = prompt("Enter WhatsApp number (with country code):");
+                                        if (phone && phone.trim()) {
+                                          resendWhatsAppInvite(candidate, phone.trim());
+                                        }
+                                      }}
+                                      disabled={resending[candidate.id]?.whatsapp}
+                                    >
+                                      <MessageCircle className="w-4 h-4 mr-2" />
+                                      Resend WhatsApp
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
                               </div>
                             </div>
                           ))}
