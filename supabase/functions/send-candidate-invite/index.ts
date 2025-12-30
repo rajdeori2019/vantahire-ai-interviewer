@@ -277,6 +277,24 @@ const handler = async (req: Request): Promise<Response> => {
     const responseData = await emailResponse.json();
     console.log("Email sent successfully via Brevo:", responseData);
 
+    // Store email tracking record
+    try {
+      const messageId = responseData.messageId || null;
+      await supabaseAdmin
+        .from("email_messages")
+        .insert({
+          interview_id: interviewId,
+          recipient_email: candidateEmail,
+          message_id: messageId,
+          status: "sent",
+          sent_at: new Date().toISOString(),
+        });
+      console.log("Email tracking record created for interview:", interviewId);
+    } catch (trackingError) {
+      console.error("Failed to create email tracking record:", trackingError);
+      // Don't fail the request if tracking fails
+    }
+
     return new Response(JSON.stringify({ success: true, data: responseData }), {
       status: 200,
       headers: {

@@ -204,6 +204,62 @@ export type Database = {
         }
         Relationships: []
       }
+      email_messages: {
+        Row: {
+          bounced_at: string | null
+          created_at: string
+          delivered_at: string | null
+          error_message: string | null
+          failed_at: string | null
+          id: string
+          interview_id: string
+          message_id: string | null
+          opened_at: string | null
+          recipient_email: string
+          sent_at: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          bounced_at?: string | null
+          created_at?: string
+          delivered_at?: string | null
+          error_message?: string | null
+          failed_at?: string | null
+          id?: string
+          interview_id: string
+          message_id?: string | null
+          opened_at?: string | null
+          recipient_email: string
+          sent_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          bounced_at?: string | null
+          created_at?: string
+          delivered_at?: string | null
+          error_message?: string | null
+          failed_at?: string | null
+          id?: string
+          interview_id?: string
+          message_id?: string | null
+          opened_at?: string | null
+          recipient_email?: string
+          sent_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_messages_interview_id_fkey"
+            columns: ["interview_id"]
+            isOneToOne: false
+            referencedRelation: "interviews"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       interview_messages: {
         Row: {
           content: string
