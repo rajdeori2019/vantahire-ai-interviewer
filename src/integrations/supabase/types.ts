@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_settings: {
+        Row: {
+          created_at: string
+          id: string
+          secret_signup_code: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          secret_signup_code: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          secret_signup_code?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       api_keys: {
         Row: {
           created_at: string | null
