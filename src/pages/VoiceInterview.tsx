@@ -965,58 +965,89 @@ const VoiceInterview = () => {
               </div>
             </div>
 
-            {/* Document Upload Section */}
+            {/* Before You Begin - Quick Tips */}
             <div className="bg-card rounded-2xl border border-border p-6">
-              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                <FileText className="w-5 h-5" />
-                Upload Documents (Optional)
+              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-accent">
+                ✅ Before You Begin – Quick Tips
               </h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Upload your resume or job description for better context
-              </p>
-              
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileUpload}
-                accept=".pdf,.doc,.docx,.txt"
-                className="hidden"
-              />
-              
-              <Button
-                variant="outline"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isUploading}
-                className="w-full"
-              >
-                {isUploading ? (
-                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                ) : (
-                  <Upload className="w-4 h-4 mr-2" />
-                )}
-                {uploadedFile ? uploadedFile.name : "Choose File"}
-              </Button>
-              
-              {uploadedFile && (
-                <p className="text-sm text-accent mt-2">✓ File uploaded successfully</p>
-              )}
+              <ul className="space-y-3 text-muted-foreground">
+                <li className="flex items-start gap-2">
+                  <span className="text-accent mt-0.5">•</span>
+                  <span>Ensure a stable internet connection</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-accent mt-0.5">•</span>
+                  <span>Choose a quiet, comfortable, and well-lit space</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-accent mt-0.5">•</span>
+                  <span>Keep your camera and microphone ON during the interview</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-accent mt-0.5">•</span>
+                  <span>Read each question carefully and answer at your own pace</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-accent mt-0.5">•</span>
+                  <span>Be yourself—we're interested in your real experience and thinking</span>
+                </li>
+              </ul>
             </div>
 
-            {/* Notes Section */}
+            {/* Please Avoid */}
             <div className="bg-card rounded-2xl border border-border p-6">
-              <h3 className="text-lg font-semibold mb-4">Additional Notes</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Paste any additional information you'd like the interviewer to consider (max 5000 characters)
-              </p>
-              <Textarea
-                value={candidateNotes}
-                onChange={(e) => setCandidateNotes(e.target.value)}
-                placeholder="Paste your resume text, job description, or any notes here..."
-                className="min-h-[150px] bg-background border-border text-foreground placeholder:text-muted-foreground"
-                maxLength={5000}
-              />
-              <p className="text-xs text-muted-foreground mt-2">
-                {candidateNotes.length}/5000 characters
+              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-destructive">
+                ❌ Please Avoid
+              </h3>
+              <ul className="space-y-3 text-muted-foreground">
+                <li className="flex items-start gap-2">
+                  <span className="text-destructive mt-0.5">•</span>
+                  <span>Refreshing or closing the browser once the interview starts</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-destructive mt-0.5">•</span>
+                  <span>Switching off your camera or microphone mid-interview</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-destructive mt-0.5">•</span>
+                  <span>Using external help or unfair means</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-destructive mt-0.5">•</span>
+                  <span>Rushing your answers—clarity matters more than speed</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* What to Expect */}
+            <div className="bg-card rounded-2xl border border-border p-6">
+              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-primary">
+                🌟 What to Expect
+              </h3>
+              <ul className="space-y-3 text-muted-foreground">
+                <li className="flex items-start gap-2">
+                  <span className="text-primary mt-0.5">•</span>
+                  <span>A conversational AI interview, not a test</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-primary mt-0.5">•</span>
+                  <span>Takes about 15–30 minutes to complete</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-primary mt-0.5">•</span>
+                  <span>Questions tailored to the role you have applied</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-primary mt-0.5">•</span>
+                  <span>You can complete it at your convenience, in one sitting</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Encouragement Note */}
+            <div className="bg-primary/10 rounded-2xl border border-primary/20 p-6 text-center">
+              <p className="text-muted-foreground">
+                💡 There are no trick questions. Take a deep breath, stay relaxed, and do your best.
               </p>
             </div>
 
