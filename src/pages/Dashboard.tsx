@@ -121,8 +121,7 @@ const Dashboard = () => {
   const [newInterview, setNewInterview] = useState({
     email: "",
     name: "",
-    phone: "",
-    jobRole: ""
+    phone: ""
   });
   const [creating, setCreating] = useState(false);
   const [resendingEmail, setResendingEmail] = useState<string | null>(null);
@@ -365,7 +364,7 @@ const Dashboard = () => {
           recruiter_id: user.id,
           candidate_email: newInterview.email,
           candidate_name: newInterview.name || null,
-          job_role: newInterview.jobRole,
+          job_role: "General Interview",
           status: "pending",
           time_limit_minutes: 30
         })
@@ -392,7 +391,7 @@ const Dashboard = () => {
           body: {
             candidateEmail: newInterview.email,
             candidateName: newInterview.name || null,
-            jobRole: newInterview.jobRole,
+            jobRole: "General Interview",
             interviewId: data.id,
             interviewUrl,
             recruiterId: user.id,
@@ -439,7 +438,7 @@ const Dashboard = () => {
 
       setInterviews([data as Interview, ...interviews]);
       setCreateDialogOpen(false);
-      setNewInterview({ email: "", name: "", phone: "", jobRole: "" });
+      setNewInterview({ email: "", name: "", phone: "" });
     } catch (error: any) {
       console.error("Error creating interview:", error);
       toast({
@@ -918,23 +917,11 @@ const Dashboard = () => {
                       idPrefix="new-interview"
                       disabled={creating}
                     />
-                    <div className="space-y-2">
-                      <Label htmlFor="jobRole">Job Role *</Label>
-                      <Input
-                        id="jobRole"
-                        type="text"
-                        placeholder="Senior Software Engineer"
-                        value={newInterview.jobRole}
-                        onChange={(e) => setNewInterview({...newInterview, jobRole: e.target.value})}
-                        required
-                        disabled={creating}
-                      />
-                    </div>
                     <div className="flex gap-2 pt-2">
                       <Button type="button" variant="outline" onClick={() => setCreateDialogOpen(false)} className="flex-1" disabled={creating}>
                         Cancel
                       </Button>
-                      <Button type="submit" variant="hero" className="flex-1" disabled={creating || !newInterview.email || !newInterview.name || !newInterview.phone || !newInterview.jobRole}>
+                      <Button type="submit" variant="hero" className="flex-1" disabled={creating || !newInterview.email || !newInterview.name || !newInterview.phone}>
                         {creating ? "Adding..." : "Add & Send Invite"}
                       </Button>
                     </div>
