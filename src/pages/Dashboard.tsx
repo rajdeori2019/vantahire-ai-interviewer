@@ -95,6 +95,7 @@ const adjustColor = (color: string, amount: number): string => {
 
 const Dashboard = () => {
   const [user, setUser] = useState<User | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [interviews, setInterviews] = useState<Interview[]>([]);
   const [loading, setLoading] = useState(true);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -126,11 +127,23 @@ const Dashboard = () => {
   const { whatsappMessages } = useWhatsAppStatus(interviewIds);
 
   useEffect(() => {
+    const checkAdminRole = async (userId: string) => {
+      const { data } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId)
+        .eq('role', 'admin')
+        .maybeSingle();
+      setIsAdmin(data !== null);
+    };
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setUser(session?.user ?? null);
         if (!session) {
           navigate("/auth");
+        } else {
+          setTimeout(() => checkAdminRole(session.user.id), 0);
         }
       }
     );
@@ -142,6 +155,7 @@ const Dashboard = () => {
       } else {
         fetchInterviews();
         fetchProfile(session.user.id);
+        checkAdminRole(session.user.id);
       }
     });
 
@@ -622,6 +636,7 @@ const Dashboard = () => {
   return (
     <AppLayout
       footer="minimal"
+      isAdmin={isAdmin}
       headerRightContent={
         <>
           <Button variant="ghost" size="sm" onClick={() => navigate("/settings")} title="Settings" data-tour="settings">
