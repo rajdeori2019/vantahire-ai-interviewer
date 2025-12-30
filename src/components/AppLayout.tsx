@@ -18,6 +18,8 @@ interface AppLayoutProps {
   outsideContent?: ReactNode;
   /** Footer variant: 'none' | 'full' | 'minimal' (default: 'none') */
   footer?: 'none' | 'full' | 'minimal';
+  /** Whether to show admin badge in header */
+  isAdmin?: boolean;
 }
 
 const AppLayout = ({ 
@@ -27,11 +29,12 @@ const AppLayout = ({
   containerClassName = "",
   fullHeight = false,
   outsideContent,
-  footer = 'none'
+  footer = 'none',
+  isAdmin = false
 }: AppLayoutProps) => {
   return (
     <div className={`min-h-screen bg-background ${fullHeight ? "flex flex-col" : ""}`}>
-      <AppHeader rightContent={headerRightContent} linkToHome={linkToHome} />
+      <AppHeader rightContent={headerRightContent} linkToHome={linkToHome} isAdmin={isAdmin} />
       
       <main className={`container mx-auto px-4 py-8 ${fullHeight ? "flex-1 flex flex-col" : ""} ${containerClassName}`}>
         {children}
