@@ -518,7 +518,7 @@ const JobsTab = ({ user }: JobsTabProps) => {
             <p className="text-sm text-muted-foreground">Create jobs and manage candidates</p>
           </div>
 
-          <Button variant="hero" onClick={() => setCreateJobOpen(true)}>
+          <Button variant="hero" onClick={() => setCreateJobOpen(true)} data-tour="create-job">
             <Plus className="w-4 h-4 mr-2" />
             New Job
           </Button>
@@ -545,7 +545,7 @@ const JobsTab = ({ user }: JobsTabProps) => {
               const pendingCount = candidates.filter(c => c.status === "pending").length;
 
               return (
-                <div key={job.id} className="p-4">
+                <div key={job.id} className="p-4" data-tour={jobs.indexOf(job) === 0 ? "job-card" : undefined}>
                   <div className="flex items-start justify-between">
                     <div 
                       className="flex-1 cursor-pointer"
