@@ -971,7 +971,7 @@ const VoiceInterview = () => {
   // Pre-interview setup screen
   if (showPreInterview && interview.status !== "completed") {
     return (
-      <div className="min-h-screen bg-foreground text-primary-foreground">
+      <div className="min-h-screen bg-foreground text-primary-foreground overflow-auto">
         <header className="border-b border-primary-foreground/10">
           <div className="container mx-auto px-4 h-16 flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -985,7 +985,7 @@ const VoiceInterview = () => {
           </div>
         </header>
 
-        <main className="container mx-auto px-4 py-12 max-w-2xl">
+        <main className="container mx-auto px-4 py-12 max-w-2xl pb-24">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
