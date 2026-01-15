@@ -41,3 +41,6 @@ verify_jwt = false
 
 [functions.generate-final-recommendation]
 verify_jwt = false
+
+[functions.admin-signup]
+verify_jwt = false

@@ -9,6 +9,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Mail, Lock, User, Shield, Key, ArrowLeft } from "lucide-react";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+
 type AuthView = "login" | "signup" | "forgot-password";
 
 const AdminAuth = () => {
@@ -27,25 +29,6 @@ const AdminAuth = () => {
       navigate("/admin");
     }
   }, [user, isAdmin, isLoading, navigate]);
-
-  const validateSignupCode = async (code: string): Promise<boolean> => {
-    try {
-      const { data, error } = await supabase
-        .from('admin_settings' as any)
-        .select('secret_signup_code')
-        .single();
-
-      if (error) {
-        console.error('Error validating code:', error);
-        return false;
-      }
-
-      return (data as any)?.secret_signup_code === code;
-    } catch (error) {
-      console.error('Error validating signup code:', error);
-      return false;
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -74,24 +57,25 @@ const AdminAuth = () => {
         toast({ title: "Welcome back!", description: "Successfully signed in as admin." });
         navigate("/admin");
       } else if (view === "signup") {
-        // Validate signup code first
-        const isValidCode = await validateSignupCode(signupCode);
-        if (!isValidCode) {
-          throw new Error('Invalid admin signup code');
-        }
-
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: `${window.location.origin}/admin`,
-            data: { 
-              full_name: fullName,
-              role: 'admin'
-            }
-          }
+        // Use edge function for server-side signup code validation
+        const response = await fetch(`${SUPABASE_URL}/functions/v1/admin-signup`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email,
+            password,
+            fullName,
+            signupCode
+          }),
         });
-        if (error) throw error;
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(result.error || 'Failed to create admin account');
+        }
 
         toast({ 
           title: "Account created!", 
